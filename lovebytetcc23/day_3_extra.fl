@@ -1,0 +1,17 @@
+let n=150 r=100
+!physics dimensions=3 state=:d
+ !anchor id=:m
+ for i in ..n
+  !particle id=i position=(beta(:p;i)[..3]-.5)*600
+  !distance from=:m to=i max=350
+ !drag strength=1m
+ !random strength=50
+!window size=1080
+ !canvas3d color=1 max_lights=n fog_max=900
+  for i in ..n
+   let a=$(:d;i) c=hsv(i/n;1;1)
+   !sphere position=a size=10 emissive=c*2
+   !light position=a color=c*3k
+   for j in i+1..n
+    let b=$(:d;j) d=hypot(a-b)
+    (!cylinder start=a end=b radius=2 transparency=d/r) if d<r

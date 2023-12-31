@@ -1,0 +1,10 @@
+
+let ROWS=75 COLS=150
+
+!window size=1280;720
+    !canvas3d viewpoint=100;ROWS*5;125 up=0;0;1 samples=4 fog_color=0.01 fog_min=ROWS*2 fog_max=ROWS*10
+        for row in ..ROWS
+            let zs=noise(:surface, row/25, (..COLS)/25, beat/10)
+            for col in ..COLS
+                let z=zs[col]
+                !sphere position=10*(col-COLS/2);10*(row-ROWS/2);z*125 emissive=hsv(z*0.75;1;1)
