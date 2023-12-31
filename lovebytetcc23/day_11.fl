@@ -1,3 +1,10 @@
+-- The Third Dimension
+--
+-- This example is based on code written for a live performance of Feral Five's
+-- song "Ego". 3D simplex noise is used to derive the size of each box and the
+-- starting point for this is moved continuously to create the "passing dark
+-- clouds" effect. A single very bright light is placed at the centre of the
+-- voxel cube.
 
 let d=..20 g=(.5+d)/20-.5 r=g*2+beat/2 p=g*1k
 !window size=1080

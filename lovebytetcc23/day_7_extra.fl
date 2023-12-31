@@ -1,3 +1,9 @@
+-- Snowflake
+--
+-- This example uses a 2D canvas and makes use of recursion. Recursion is not
+-- supported in Flitter, but can be forced using an old lambda-calculus trick.
+-- A number of other obtuse things are done to keep the character count low,
+-- like the various inline `if` and `for` expressions.
 
 let t=beat/20 s=300
 func f(f,d,r,l)

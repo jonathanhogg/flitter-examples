@@ -1,3 +1,15 @@
+-- Let it Grow!
+--
+-- This grass example is based on code from an interactive artwork that Jonathan
+-- is developing with artist Di Mainstone. It uses a template function to setup
+-- the lights as a way of saving a few precious characters. Two separate
+-- 3-octave 3D simplex noise functions are used to create the x and y wave
+-- element of each blade. These functions are called once with row and column
+-- ranges to generate a massive 10k-vectors containing each value. Each blade
+-- is also offset slightly with random Beta(2,2) distribution numbers to make
+-- the result look more organic. Cones are used for the actual blades and the
+-- varied colouring comes from the different directions of the lights.
+
 let b=beta r=..10k o=b(0)[r] p=b(1)[r] c=..2|.02 t=beat/10
  n=octnoise x=n(0,3,.4,c,c,t) y=n(1,3,.4,c,c,t) d=hypot(x,y)*.2 h=angle(x,y)
 func l(_,c,d)

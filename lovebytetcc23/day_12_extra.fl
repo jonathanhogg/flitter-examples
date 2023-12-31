@@ -1,3 +1,10 @@
+-- Candy Cane
+--
+-- This concise little demo draws a red and white candy-cane by rendering
+-- thousands of individual squashed spheres that overlap each other with
+-- an increasing rotation that creates the twist. Switching from translations
+-- to rotations create the signature hook shape. Adding an additional rotation
+-- based on beat creats a barber-pole effect.
 
 !window size=1080
   !canvas3d rotate=beat/(20;40;60) translate=-150;-50;0

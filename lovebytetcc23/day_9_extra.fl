@@ -1,6 +1,12 @@
+-- 3D Dot Landscape
+--
+-- This example pushes the engine quite hard as it is not designed for very
+-- large numbers of objects (there's 11,250 spheres in this). The code is left
+-- fairly readable as it's quite simple. A 2D slice through 3D simplex noise is
+-- used to create the shifting landscape. This is calculated row at a time as
+-- this is faster than point at a time.
 
 let ROWS=75 COLS=150
-
 !window size=1280;720
     !canvas3d viewpoint=100;ROWS*5;125 up=0;0;1 samples=4 fog_color=0.01 fog_min=ROWS*2 fog_max=ROWS*10
         for row in ..ROWS

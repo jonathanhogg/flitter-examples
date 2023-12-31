@@ -1,3 +1,10 @@
+-- Connect the Dots
+--
+-- This example uses a physics engine to randomly move a set of balls around
+-- in space while constraining them to a specific volume. Connecting cylinders
+-- are rendered between close balls, with use of transparency to make them
+-- fade in and out of existence.
+
 let n=150 r=100
 !physics dimensions=3 state=:d
  !anchor id=:m

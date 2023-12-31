@@ -1,3 +1,10 @@
+-- Do or Donut
+--
+-- This example is based on code written by Jonathan for a live performance of
+-- Feral Five's song "Roll It With Me". Coloured specular reflections are
+-- used to give the effect of gold. A torus is easy to create in Flitter with
+-- rotation transforms. The original code had balls of light whizzing around
+-- inside the torus, but they are omitted here to save space.
 
 let g=3/(3;4;12) b=beat
 !window size=1080
