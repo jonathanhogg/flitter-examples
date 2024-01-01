@@ -1,7 +1,10 @@
 -- Genuary day 1: Particles, lots of them
 --
 -- This is a rough fireworks simulation. The fireworks cast a cone of light on
--- the ground, which is completely unrealistic but looks nice.
+-- the ground, which is completely unrealistic but looks nice. The sparkle
+-- particles have diffuse as well as emissive colour, which means they fall as
+-- dust/ash as they burn out. If you watch carefully you'll notice that the
+-- fire trail of a new rocket going up sometimes illuminates this ash.
 --
 -- Note that this demo leaks memory pretty badly. The problem is that each new
 -- firework has a brand new set of particles. Although the physics engine ceases
@@ -11,7 +14,7 @@
 -- make sense, but there's no way of resetting their state.
 --
 -- Record a video with:
--- flitter day1.fl --lockstep --fps=30 --runtime=60 --define RECORD=1
+-- flitter day1.fl --lockstep --fps=30 --runtime=60 --define RECORD=720
 
 import bloom_filter from '../common/bloom.fl'
 
@@ -20,32 +23,40 @@ let fireworks=8 sparkles=400 interval=3 latest=beat//interval
 !physics state=:fireworks dimensions=3 resolution=1/30
     for i in max(0, latest+1-fireworks)..latest+1
         let age=beat/interval-i
-        !particle id=:rocket;i position=(uniform(:pos;i)[..2]-0.5)*1k;0 velocity=(beta(:vel;i)[..2]-0.5)*2k;2k radius=1
-        if age > 2
+        !particle id=:rocket;i position=(uniform(:pos;i)[..2]-0.5)*1k;0 velocity=(beta(:vel;i)[..2]-0.5)*2k;2k
+        if age >= 2
             for j in ..sparkles
-                let lon=uniform(:lon;i)[j] lat=beta(:lat;i)[j] s=500+normal(:speed;i)[j]*20
+                let lon=uniform(:lon;i)[j] lat=beta(:lat;i)[j]-0.5 s=500+normal(:speed;i)[j]*50
                     r;z=s*polar(lat) x;y=r*polar(lon)
                 !particle id=:sparkle;i;j position=$(:fireworks;:rocket;i) velocity=x;y;z
     !constant acceleration=0;0;-20
     !drag strength=2m
 
-!window size=(720 if RECORD else 1080) colorbits=16
+!window size=(RECORD or 1080) colorbits=16
     !record filename=('day1.mp4' if RECORD) codec=:hevc crf=25
-        @bloom_filter radius=(10 if RECORD else 15)
-            !canvas3d samples=4 viewpoint=0;-1k;100 focus=0;0;750 up=0;0;1 far=5k fov=90/360 fog_color=hsv(0.6;0.9;0.01) fog_min=1k fog_max=5k
-                !cylinder size=4k;4k;1 rotation=0;0;0 color=1
+        @bloom_filter radius=((RECORD * (1;1))[0]/72 if RECORD else 15)
+            !canvas3d samples=4 max_lights=18*fireworks viewpoint=0;-2k;200 focus=0;0;750 up=0;0;1 far=5k fov=60/360 \
+                      fog_color=hsv(0.6;0.9;0.01) fog_min=2k fog_max=5k
+                !cylinder size=4k;4k;1 color=0.1
                 for i in max(0, latest+1-fireworks)..latest+1
-                    let age=beat/interval-i pos=$(:fireworks;:rocket;i) tail=-$(:fireworks;:rocket;i;:velocity)
+                    let age=beat/interval-i pos=$(:fireworks;:rocket;i) tail=-$(:fireworks;:rocket;i;:velocity) dir=-normalize(tail)
                     if pos and age < 3
                         let c=hsl(0.03;1;0.75-age/4)
                         !transform translate=pos
+                            !material color=1 shininess=200 transparency=linear(age-2)
+                                !cone start=50*dir end=60*dir radius=5
+                                !cylinder start=0 end=50*dir radius=5
                             !sphere size=5 emissive=c*10
-                            !cone start=0 end=tail/3 radius=2.5 emissive=c*5
                             !cone start=0 end=tail/2 radius=5 emissive=c transparency=0.5
-                            !light position=0 color=c*5k
-                    if age > 2
-                        let hue=uniform(:hue)[i] brightness=impulse(linear((age-2)/(fireworks-3)))
-                        !light position=pos direction=0;0;-1 outer=45/360 color=hsv(hue;1;brightness)*100k
-                        for j in ..sparkles
-                            let p=$(:fireworks;:sparkle;i;j) c=hsv(hue+normal(:spread;i)[j]/10;1;brightness)
-                            !sphere size=2 position=p emissive=10*c
+                            !cone start=0 end=tail/10 radius=2.5 emissive=c*10
+                            !light position=0 color=c*50k
+                            !light position=0 direction=tail outer=20/360 color=-c*50k
+                    if age > 2 and $(:fireworks;:sparkle;i;0)
+                        let hue=uniform(:hue)[i] brightness=impulse(linear((age-2)/(fireworks-4)))
+                            hues=hue+normal(:spread;i)[..sparkles]/10 color=hsv(hue;1;brightness)
+                        !material color=0.5 transparency=linear(age-(fireworks-1))
+                            let mid=sum($(:fireworks;:sparkle;i;j) for j in ..sparkles, 3)/sparkles
+                            !light position=mid color=color*150k direction=0;0;-1 outer=90/360
+                            for j in ..sparkles
+                                let p=$(:fireworks;:sparkle;i;j) c=hsv(hues[j];1;brightness)
+                                !sphere size=2 position=p emissive=c*10
