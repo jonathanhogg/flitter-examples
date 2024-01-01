@@ -9,6 +9,9 @@
 -- and velocity of each particle is left in the state dictionary. Currently
 -- there's no solution to this. You'd imagine reusing the old particles would
 -- make sense, but there's no way of resetting their state.
+--
+-- Record a video with:
+-- flitter day1.fl --lockstep --fps=30 --runtime=60 --define RECORD=1
 
 import bloom_filter from '../common/bloom.fl'
 
@@ -27,7 +30,7 @@ let fireworks=8 sparkles=400 interval=3 start=beat//interval
     !drag strength=2m
 
 !window size=(720 if RECORD else 1080) colorbits=16
-    !record filename=('day1.mp4' if RECORD) codec=:hevc crf=25 limit=60
+    !record filename=('day1.mp4' if RECORD) codec=:hevc crf=25
         @bloom_filter radius=(10 if RECORD else 15)
             !canvas3d samples=4 viewpoint=0;-1k;100 focus=0;0;750 up=0;0;1 far=5k fov=90/360 fog_color=hsv(0.6;0.9;0.01) fog_min=1k fog_max=5k
                 !cylinder size=4k;4k;1 rotation=0;0;0 color=1
