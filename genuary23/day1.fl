@@ -15,10 +15,10 @@
 
 import bloom_filter from '../common/bloom.fl'
 
-let fireworks=8 sparkles=400 interval=3 start=beat//interval
+let fireworks=8 sparkles=400 interval=3 latest=beat//interval
 
 !physics state=:fireworks dimensions=3 resolution=1/30
-    for i in max(0, start+1-fireworks)..start+1
+    for i in max(0, latest+1-fireworks)..latest+1
         let age=beat/interval-i
         !particle id=:rocket;i position=(uniform(:pos;i)[..2]-0.5)*1k;0 velocity=(beta(:vel;i)[..2]-0.5)*2k;2k radius=1
         if age > 2
@@ -34,14 +34,14 @@ let fireworks=8 sparkles=400 interval=3 start=beat//interval
         @bloom_filter radius=(10 if RECORD else 15)
             !canvas3d samples=4 viewpoint=0;-1k;100 focus=0;0;750 up=0;0;1 far=5k fov=90/360 fog_color=hsv(0.6;0.9;0.01) fog_min=1k fog_max=5k
                 !cylinder size=4k;4k;1 rotation=0;0;0 color=1
-                for i in max(0, start+1-fireworks)..start+1
+                for i in max(0, latest+1-fireworks)..latest+1
                     let age=beat/interval-i pos=$(:fireworks;:rocket;i) tail=-$(:fireworks;:rocket;i;:velocity)
                     if pos and age < 3
                         let c=hsl(0.03;1;0.75-age/4)
                         !transform translate=pos
                             !sphere size=5 emissive=c*10
-                            !cone end=tail/3 start=0 radius=2.5 emissive=c*5
-                            !cone end=tail/2 start=0 radius=5 emissive=c transparency=0.5
+                            !cone start=0 end=tail/3 radius=2.5 emissive=c*5
+                            !cone start=0 end=tail/2 radius=5 emissive=c transparency=0.5
                             !light position=0 color=c*5k
                     if age > 2
                         let hue=uniform(:hue)[i] brightness=impulse(linear((age-2)/(fireworks-3)))
