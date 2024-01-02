@@ -14,7 +14,7 @@
 --
 -- The shader computes the colour of each pixel as a weighted sum of each
 -- point's colour, weighted by a power of the distance from each point. We
--- vary the power continously between 0 and 3 with a sine wave.
+-- vary the power continously between 1 and 4 with a sine wave.
 --
 -- Note that a physics system is a *renderer*, which means it will be
 -- executed *after* the first evaluation of the program. This means that there
