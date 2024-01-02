@@ -74,5 +74,5 @@ let points=($(:points;i) for i in ..NPOINTS) if $(:points;0) else initial_points
     colors=hsv(i/NPOINTS;1;1) for i in ..NPOINTS
 
 !window size=1080
-    !record filename=('day2.mp4' if RECORD and beat) codec=:hevc crf=15
+    !record filename=('day2.mp4' if RECORD) codec=:hevc crf=15
         !shader fragment=SHADER points=points colors=colors power=1+3*sine(beat/30)
