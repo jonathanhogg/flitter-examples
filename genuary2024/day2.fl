@@ -1,0 +1,78 @@
+-- Genuary day 2: No palettes
+--
+-- Flitter doesn't have a notion of palettes, so this demo looks at the idea
+-- of emergent colour. It mixes a GLSL shader with a Flitter physics system.
+-- Here the physics system gets to be a source of state and randomness and the
+-- shader gets to focus on crunching numbers to colour every pixel. The point
+-- is to show how easily values can be passed into a shader from Flitter.
+--
+-- A set of `NPOINTS` points bounce around inside the screen space. They repel
+-- each other with an electrostic force while also being constrained to not get
+-- more than a third of the screen diagonal apart from each other. Brownian
+-- motion is injected, and a weak drag is used to stop the system getting out
+-- of control.
+--
+-- The shader computes the colour of each pixel as a weighted sum of each
+-- point's colour, weighted by a power of the distance from each point. We
+-- vary the power continously between 0 and 3 with a sine wave.
+--
+-- Note that a physics system is a *renderer*, which means it will be
+-- executed *after* the first evaluation of the program. This means that there
+-- are no valid points in the state on the first iteration. This is why the
+-- `points` variable is set to `initial_points` if the first point state is
+-- null.
+--
+-- Record a video with:
+-- flitter day2.fl --lockstep --fps=60 --runtime=60 --define RECORD=1080
+
+
+let SIZE=(RECORD or 2160)*(1;1)
+    NPOINTS=3
+
+let SHADER="""
+#version 330
+
+in vec2 coord;
+out vec4 frag_color;
+
+const int NPOINTS = """;NPOINTS;""";
+
+uniform vec2 size;
+uniform vec2 points[NPOINTS];
+uniform vec3 colors[NPOINTS];
+uniform float power;
+
+void main() {
+    vec2 position = coord * size;
+    vec3 color = vec3(0);
+    float total = 0;
+    for (int i=0; i < NPOINTS; i++) {
+        float weight = pow(length(points[i] - position), power);
+        color += colors[i] * weight;
+        total += weight;
+    }
+    frag_color = vec4(color / total, 1);
+}
+"""
+
+let initial_points=uniform(:position)[..2*NPOINTS]*SIZE
+
+!physics state=:points dimensions=2
+    for i in ..NPOINTS
+        !particle id=i charge=1 position=initial_points[i*2..(i+1)*2] velocity=uniform(:velocity;i)[..2]*SIZE
+        for j in i+1..NPOINTS
+            !distance from=i to=j max=hypot(SIZE)/3 strength=0.1
+    !electrostatic strength=1M
+    !random strength=1k
+    !drag strength=1m
+    !barrier position=0 normal=1;0
+    !barrier position=0 normal=0;1
+    !barrier position=SIZE normal=-1;0
+    !barrier position=SIZE normal=0;-1
+
+let points=($(:points;i) for i in ..NPOINTS) if $(:points;0) else initial_points
+    colors=hsv(i/NPOINTS;1;1) for i in ..NPOINTS
+
+!window size=1080
+    !record filename=('day2.mp4' if RECORD and beat) codec=:hevc crf=15
+        !shader fragment=SHADER points=points colors=colors power=1+3*sine(beat/30)
