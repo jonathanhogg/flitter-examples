@@ -17,6 +17,15 @@
 -- bit) to allow the references to resolve and the drawing to recurse a bit and
 -- limited to exactly 30 seconds. The result should be a seamless loop.
 --
+-- A couple of other notes:
+--  + The 2D canvas is switched into linear colour mode to get even gradients;
+--    you can play with this to see the difference
+--  + The 2D canvas is hidden inside the window with `hidden=true`; turn this
+--    off to get an even trippier output
+--  + The record node is also hidden, but this won't make any real difference
+--    because the output of a record node is always the input, so the cube would
+--    just be drawn over itself again
+--
 -- Record a video with:
 -- flitter day3.fl --lockstep --fps=30 --runtime=32 --define RECORD=1080
 
@@ -25,20 +34,16 @@
 let SIZE=(RECORD or 2160)*(1;1)
 
 !window size=SIZE
-    !canvas id=:texture hidden=true linear=true
+    !canvas id=:texture linear=true hidden=true
         !gradient start=0;0 end=SIZE[0];0
             for i in ..7
                 !stop color=hsv(i/6;1;1) offset=i/6
-        !path
-            !rect size=SIZE
-            !fill
+        !rect size=SIZE fill=true
         for i in ..6
-            !image point=i/6*SIZE[0];0 size=SIZE[0]/6;SIZE[1] texture_id=:cube
+            !image texture_id=:cube point=(i/6;0)*SIZE size=(1/6;1)*SIZE
     !canvas3d id=:cube viewpoint=0;0;300 fov=30/360
         !light color=0.9 direction=0;0;-1
-        !transform rotate=beat/(10;15;30)
-            !material texture_id=:texture
-                !box size=100
+        !box texture_id=:texture size=100 rotation=beat/(10;15;30)
 
-    !record filename=('day3.mp4' if RECORD and beat > 1) codec=:hevc crf=25 limit=30
+    !record filename=('day3.mp4' if RECORD and beat > 1) codec=:hevc crf=25 limit=30 hidden=true
         !reference id=:cube
