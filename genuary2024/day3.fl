@@ -34,13 +34,13 @@
 let SIZE=(RECORD or 2160)*(1;1)
 
 !window size=SIZE
-    !canvas id=:texture linear=true hidden=true
-        !gradient start=0;0 end=SIZE[0];0
+    !canvas id=:texture scale=SIZE linear=true hidden=true
+        !gradient start=0;0 end=1;0
             for i in ..7
                 !stop color=hsv(i/6;1;1) offset=i/6
-        !rect size=SIZE fill=true
+        !rect size=1 fill=true
         for i in ..6
-            !image texture_id=:cube point=(i/6;0)*SIZE size=(1/6;1)*SIZE
+            !image texture_id=:cube point=i/6;0 size=1/6;1
     !canvas3d id=:cube viewpoint=0;0;300 fov=30/360
         !light color=0.9 direction=0;0;-1
         !box texture_id=:texture size=100 rotation=beat/(10;15;30)
