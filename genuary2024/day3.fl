@@ -1,0 +1,44 @@
+-- Genuary day 2: Droste effect
+--
+-- This is a fairly simple demo, but shows how texture mapping works in Flitter.
+-- The canvas is filled with a hue gradient horizontally across it and then has
+-- 6 copies of the canvas3d output drawn on top of this, stretched into 6
+-- thin vertical slices. Note that the canvas3d background is transparent by
+-- default and so only the cube being rendered into that canvas3d is drawn.
+-- The canvas3d uses the canvas output as the texture for the cube - UV mapped
+-- with each face being one of those skinny vertical slices.
+--
+-- Obviously this demo contains cross-references, but this is resolved by the
+-- canvas3d using the current render output of canvas and canvas using the
+-- previous render output of canvas3d.
+--
+-- For good measure, the record node uses a texture reference as well, via a
+-- reference node. The recording is started after a second (the `and beat > 1`
+-- bit) to allow the references to resolve and the drawing to recurse a bit and
+-- limited to exactly 30 seconds. The result should be a seamless loop.
+--
+-- Record a video with:
+-- flitter day3.fl --lockstep --fps=30 --runtime=32 --define RECORD=1080
+
+%pragma tempo 60
+
+let SIZE=(RECORD or 2160)*(1;1)
+
+!window size=SIZE
+    !canvas id=:texture hidden=true linear=true
+        !gradient start=0;0 end=SIZE[0];0
+            for i in ..7
+                !stop color=hsv(i/6;1;1) offset=i/6
+        !path
+            !rect size=SIZE
+            !fill
+        for i in ..6
+            !image point=i/6*SIZE[0];0 size=SIZE[0]/6;SIZE[1] texture_id=:cube
+    !canvas3d id=:cube viewpoint=0;0;300 fov=30/360
+        !light color=0.9 direction=0;0;-1
+        !transform rotate=beat/(10;15;30)
+            !material texture_id=:texture
+                !box size=100
+
+    !record filename=('day3.mp4' if RECORD and beat > 1) codec=:hevc crf=25 limit=30
+        !reference id=:cube
