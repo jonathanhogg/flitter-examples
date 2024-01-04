@@ -17,21 +17,36 @@
 -- to simulate the old ones that drop off the end of the list, the last position
 -- and velocity of each particle is left in the state dictionary. Currently
 -- there's no solution to this. You'd imagine reusing the old particles would
--- make sense, but there's no way of resetting their state.
+-- make sense, but there's no way of resetting their state. The upper limit
+-- is bounded by the `total_fireworks` value - as thats the total number of
+-- fireworks in the display.
 --
 -- Record a video with:
 -- flitter day1.fl --lockstep --fps=30 --runtime=60 --define RECORD=720
 
+%pragma tempo 60
+
 import bloom_filter from '../common/bloom.fl'
 
 let SIZE=(RECORD or 1080)*(1;1)
-    fireworks=8 sparkles=500 interval=2 latest=beat//interval
+    average_interval=1
+    sparkles=500
+    fuse_time=2
+    sparkle_time=5
+    decay_time=2
+    total_fireworks=100
+    launch_speed=500
+    boom=1
+
+let max_age=fuse_time+sparkle_time+decay_time
+    launch_times=accumulate(average_interval*2*beta(:interval)[..total_fireworks])
+    active=(i if beat > t and (beat-t) < max_age) for i;t in zip(..total_fireworks, launch_times)
 
 !physics state=:firework dimensions=3 resolution=1/30
-    for i in max(0, latest+1-fireworks)..latest+1
-        let age=beat/interval-i speed=750*(0.75+0.5*beta(:speed)[i])
+    for i in active
+        let age=beat-launch_times[i] speed=launch_speed*(0.75+0.5*beta(:speed)[i])
         !particle id=i radius=5 mass=10 position=(uniform(:pos;i)[..2]-0.5)*1k;25 velocity=(beta(:vel;i)[..2]-0.5;1)*speed
-        if age > 2
+        if age > fuse_time
             if $(:firework;:sparkle;i;0)
                 -- This is an optimisation step to skip calculating the starting
                 -- position and velocity of each sparkle once they exist.
@@ -41,7 +56,7 @@ let SIZE=(RECORD or 1080)*(1;1)
                 for j in ..sparkles
                     !particle radius=2 mass=0.2 id=:sparkle;i;j
             else
-                let lon=uniform(:lon;i)[..sparkles] lat=beta(:lat;i)[..sparkles]-0.5 sparkle_speed=speed*(1+0.1*normal(:speed;i)[..sparkles])
+                let lon=uniform(:lon;i)[..sparkles] lat=beta(:lat;i)[..sparkles]-0.5 sparkle_speed=boom*speed*(1+0.1*normal(:speed;i)[..sparkles])
                     start_position=$(:firework;i) start_velocity=$(:firework;i;:velocity)
                 for j in ..sparkles
                     let r;z=sparkle_speed[j]*polar(lat[j]) x;y=r*polar(lon[j])
@@ -56,9 +71,9 @@ let SIZE=(RECORD or 1080)*(1;1)
             !canvas3d samples=4 viewpoint=0;-2k;200 focus=0;0;750 up=0;0;1 far=5k fov=60/360 \
                       fog_color=hsv(0.6;0.9;0.01) fog_min=2k fog_max=5k
                 !cylinder size=3k;3k;0.01 color=0.1
-                for i in max(0, latest+1-fireworks)..latest+1
-                    let age=beat/interval-i pos=$(:firework;i)
-                    if age < 2 and pos
+                for i in active
+                    let age=beat-launch_times[i] pos=$(:firework;i)
+                    if age < fuse_time and pos
                         let vel=$(:firework;i;:velocity) speed=hypot(vel) dir=-vel/speed c=hsl(0.03;1;0.75-age/4)
                         !transform translate=pos shininess=100
                             !material color=1
@@ -68,10 +83,10 @@ let SIZE=(RECORD or 1080)*(1;1)
                             !cone start=50*dir end=(50+speed/10)*dir radius=2.5 emissive=c*10
                             !cone start=50*dir end=(50+speed/2)*dir radius=5 emissive=c transparency=0.5
                             !light position=50*dir color=c*100k
-                            !light position=50*dir direction=dir outer=20/360 color=-c*50k
+                            !light position=50*dir direction=dir outer=20/360 color=-c*75k
                     if $(:firework;:sparkle;i;0)
-                        let hue=uniform(:hue)[i] brightness=impulse(linear((age-2)/(fireworks-3)), 0.02)
-                            hues=hue+normal(:spread;i)[..sparkles]/10 size=map(quad((age+1-fireworks)), 2, 0)
+                        let hue=uniform(:hue)[i] brightness=impulse(linear((age-fuse_time)/sparkle_time), 0.02)
+                            hues=hue+normal(:spread;i)[..sparkles]/20 size=map(quad((age-fuse_time-sparkle_time)/decay_time), 2, 0)
                             prefix=:firework;:sparkle;i centre=sum($(prefix;j) for j in ..sparkles, 3)/sparkles
                         !light position=centre color=hsl(hue;1;brightness)*100k
                         !light position=centre color=hsv(hue;1;brightness)*500k direction=0;0;-1 inner=30/360 outer=80/360
