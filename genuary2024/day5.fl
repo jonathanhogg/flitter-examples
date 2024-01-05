@@ -1,0 +1,41 @@
+-- Genuary day 5: In the style of Vera Molnár
+--
+-- Vera Molnár is known for her work involving overlapping squares that
+-- degenerate across the surface of the canvas.
+--
+-- Record a video with:
+-- flitter day5.fl --lockstep --fps=30 --runtime=30 --define 'RECORD=960;720'
+
+%pragma tempo 60
+
+let SIZE=RECORD*(1;1) or (1440;1080)*2
+    COLS;ROWS=9;6
+    GRID=min(SIZE/(COLS;ROWS))
+    OVERLAYS=35
+    SQUARE=-.5;-.5;+.5;-.5;+.5;+.5;-.5;+.5
+
+!window size=SIZE
+    !canvas id=:top linear=true
+        !group composite=:add translate=SIZE/2 scale=0.8 stroke_width=0.025
+            let x=2*(..COLS)/COLS
+                y=2*(..ROWS)/ROWS
+                t=beat/8
+                z=(..OVERLAYS)/OVERLAYS
+                a=zip(noise(:xa, x, y, 13*z+t), noise(:ya, x, y, 13*z+t))
+                b=zip(noise(:xb, x, y, 13*z+t), noise(:yb, x, y, 13*z+t))
+                c=zip(noise(:xc, x, y, 13*z+t), noise(:yc, x, y, 13*z+t))
+                d=zip(noise(:xd, x, y, 13*z+t), noise(:yd, x, y, 13*z+t))
+                o=zip(noise(:ox, x, y, 3*z+t), noise(:oy, x, y, 3*z+t))*(2.5;4)
+            for x in ..COLS
+                let perturb=snap((x-0.75)/COLS) shape=sine((x+.5)/COLS)
+                for y in ..ROWS
+                    let i=x*ROWS+y
+                    !group translate=GRID*((x;y)+0.5)-(GRID*(COLS;ROWS))/2 scale=0.8*GRID color=hsv(uniform(:h)[i];0.5;0.75)
+                        for j in ..OVERLAYS*shape
+                            let k=(i*OVERLAYS+j)*2+(..2)
+                            !path
+                                !line close=true stroke=true points=SQUARE+perturb*((a[k];b[k];c[k];d[k])+shape*o[k])
+        !group composite=:difference
+            !rect size=SIZE color=1 fill=true
+    !record filename=('day5.mp4' if RECORD) codec=:hevc crf=32 hidden=true
+        !reference id=:top
