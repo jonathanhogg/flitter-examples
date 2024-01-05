@@ -1,7 +1,26 @@
 -- Genuary day 5: In the style of Vera Molnár
 --
 -- Vera Molnár is known for her work involving overlapping squares that
--- degenerate across the surface of the canvas.
+-- degenerate across the surface of the artwork according to a system. This
+-- tries to reproduce an animated version of one of her works. Sadly, the image
+-- I found was archived from a defunct blog and I've not been able to find
+-- details of the original. These two artworks are close relatives:
+--
+-- https://www.invaluable.com/auction-lot/vera-molnar-nee-en-1924-structure-de-quadrilate-e054072819
+-- https://www.invaluable.com/auction-lot/vera-molnar-born-1924-structure-a-1988-colored-ma-51-c-ab54885a96
+--
+-- The square variations are all based on noise functions and the values are
+-- generated all at once as massive vectors at the beginning of each iteration
+-- (`noise()` will build a vector output if any of it's coordinate arguments
+-- are n-vectors). However, because the `shape` value controls how many
+-- variants of each square to draw, only a small percentage of the generated
+-- values are actually used. It is still *significantly* faster to generate
+-- them all in one go than calculating the noise values a square at a time.
+--
+-- Note that noise functions in Flitter are entirely reproducible and based
+-- on pseudo-random seed values. So each time you run this it should produce
+-- *exactly* the same output. I'm considering that enough of a generative
+-- system to qualify as "after Vera Molnár".
 --
 -- Record a video with:
 -- flitter day5.fl --lockstep --fps=30 --runtime=30 --define 'RECORD=960;720'
