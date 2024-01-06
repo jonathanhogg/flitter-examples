@@ -1,0 +1,77 @@
+-- Genuary day 6: Screensaver
+--
+-- This is an homage to the legendary After Dark flying toaster screensaver
+-- from my student days on a Mac. I've challenged myself here to make something
+-- resembling a toaster, wings and toast using no external models or textures.
+--
+-- The toast gradient is possibly overkill. However, the rounded box looks like
+-- such a useful thing that maybe I ought to think about how I could make it as
+-- a primitive.
+--
+-- Record a video with:
+-- flitter day6.fl --lockstep --fps=30 --runtime=31 --define 'RECORD=1080'
+
+let SIZE=RECORD or 1080
+    TOASTERS=50
+
+func rounded_box(_, position=0, size=1, radius=0.25, side_texture_id=null)
+    let size=size*(1;1;1)-radius*2
+    !transform translate=position
+        for x in (-1;1)*size[0]/2
+            for y in (-1;1)*size[1]/2
+                !cylinder start=x;y;-size[2]/2 end=x;y;size[2]/2 radius=radius
+                for z in (-1;1)*size[2]/2
+                    !sphere position=x;y;z size=radius
+            !box position=x;0;0 size=radius*2;size[1];size[2] texture_id=side_texture_id
+            for z in (-1;1)*size[2]/2
+                !cylinder start=x;-size[1]/2;z end=x;size[1]/2;z radius=radius
+        for y in (-1;1)*size[1]/2
+            !box position=0;y;0 size=size[0];radius*2;size[2] texture_id=side_texture_id
+            for z in (-1;1)*size[2]/2
+                !cylinder start=-size[0]/2;y;z end=size[0]/2;y;z radius=radius
+        for z in (-1;1)*size[2]/2
+            !box position=0;0;z size=size[0];size[1];radius*2 texture_id=side_texture_id
+
+func toaster(_, bread=0, wings=0, bread_texture_id=null)
+    let b=impulse(bread%1, 0.1)
+    !transform scale=4;2.5;3
+        !material color=0.25 shininess=100
+            @rounded_box radius=2 size=10
+        !transform translate=0;0;3+3.5*b scale=2.5;1;2.5
+            !material color=hsv(0.15;0.5;1)
+                @rounded_box size=2;1;2 position=0;1.25;0 side_texture_id=bread_texture_id
+                @rounded_box size=2;1;2 position=0;-1.25;0 side_texture_id=bread_texture_id
+            !material color=hsv(0.1;0.9;0.5)
+                @rounded_box size=2.005;0.99;2.005 position=0;1.25;0
+                @rounded_box size=2.005;0.99;2.005 position=0;-1.25;0
+    !material color=1
+        let th=1/4*impulse(wings)-1/8
+        !transform translate=-1;12.5;0 rotate_x=th shear_x=0.75;0 scale=18;12;3
+            @rounded_box size=1 position=0;.5;0
+        !transform translate=-1;-12.5;0 rotate_x=-th shear_x=-0.75;0 scale=18;12;3
+            @rounded_box size=1 position=0;-.5;0
+    !material color=hsv(0.1;0.9;0.2) shininess=10
+        @rounded_box size=5;8;2 radius=1 position=-21;0;-7+14*b
+    !material color=0
+        !box size=25;3.5;0.1 position=0;3.125;15
+        !box size=25;3.5;0.1 position=0;-3.125;15
+        !box size=0.1;2;15 position=-20;0;0
+
+!window size=SIZE
+    !canvas id=:toast size=768;128 linear=true hidden=true translate=768*5/6;0
+        !gradient point=64 radius=64
+            !stop color=hsv(0.1;0.9;0.5);1/2
+            !stop color=hsv(0.1;0.9;0.5);1/3
+            !stop color=0;0;0;0
+        !rect size=128 fill=true
+    !canvas3d id=:top samples=4 viewpoint=-450;-550;250 focus=-100;0;0 up=0;0;1 near=1 far=2k fog_color=0 fog_min=500 fog_max=1.2k
+        !light color=2 direction=0;-2;-1
+        !light color=1 direction=-1;1;0
+        !light color=0.5 direction=2;0;-1
+        for i in ..TOASTERS
+            let y;z=(uniform(:pos;i)[..2]-0.5)*1k
+                x=(0.5-sawtooth(beat/30+uniform(:x_phase)[i]))*1.5k
+            !transform translate=x;y;z
+                @toaster wings=beat+uniform(:wing_phase)[i] bread=beat/10+uniform(:bread_phase)[i] bread_texture_id=:toast
+    !record filename=('day6.mp4' if RECORD) codec=:hevc crf=25 hidden=true
+        !reference id=:top
