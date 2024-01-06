@@ -30,16 +30,16 @@ import bloom_filter from '../common/bloom.fl'
 
 let SIZE=(RECORD or 1080)*(1;1)
     average_interval=1
-    sparkles=500
     fuse_time=2
     sparkle_time=5
     decay_time=2
-    total_fireworks=100
+    max_age=fuse_time+sparkle_time+decay_time
+    sparkles=5000/max_age*average_interval
+    total_fireworks=1000
     launch_speed=500
     boom=1
 
-let max_age=fuse_time+sparkle_time+decay_time
-    launch_times=accumulate(average_interval*2*beta(:interval)[..total_fireworks])
+let launch_times=accumulate(average_interval*2*beta(:interval)[..total_fireworks])
     active=(i if beat > t and (beat-t) < max_age) for i;t in zip(..total_fireworks, launch_times)
 
 !physics state=:firework dimensions=3 resolution=1/30

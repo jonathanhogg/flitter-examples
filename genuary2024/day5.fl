@@ -52,8 +52,7 @@ let SIZE=RECORD*(1;1) or (1440;1080)*2
                     !group translate=GRID*((x;y)+0.5)-(GRID*(COLS;ROWS))/2 scale=0.8*GRID color=hsv(uniform(:h)[i];0.5;0.75)
                         for j in ..OVERLAYS*shape
                             let k=(i*OVERLAYS+j)*2+(..2)
-                            !path
-                                !line close=true stroke=true points=SQUARE+perturb*((a[k];b[k];c[k];d[k])+shape*o[k])
+                            !line close=true stroke=true points=SQUARE+perturb*((a[k];b[k];c[k];d[k])+shape*o[k])
         !group composite=:difference
             !rect size=SIZE color=1 fill=true
     !record filename=('day5.mp4' if RECORD) codec=:hevc crf=32 hidden=true
