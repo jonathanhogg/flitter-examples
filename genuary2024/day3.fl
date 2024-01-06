@@ -1,4 +1,4 @@
--- Genuary day 2: Droste effect
+-- Genuary day 3: Droste effect
 --
 -- This is a fairly simple demo, but shows how texture mapping works in Flitter.
 -- The canvas is filled with a hue gradient horizontally across it and then has
