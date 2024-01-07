@@ -1,0 +1,109 @@
+-- Genuary day 7: Progress bar / loading screen
+--
+-- This is a rough experiment in ragdoll physics. It doesn't work very well
+-- really, because the Flitter physics engine is very simplistic.
+--
+-- Record a video with:
+-- flitter day7.fl --lockstep --runtime=30 --define 'RECORD=1080'
+
+let SIZE=RECORD or 1080
+    DOLLS=50 END=beat//2 START=max(0, END-DOLLS)
+    SEGMENTS=64 TUBE=25 BOTTOM=25+beat/2
+
+!physics state=:doll dimensions=3
+    for i in START..END
+        let start=(beta(:start;i)[..3]-0.5)*TUBE*2 + (0;0;500)
+        !particle id=i;:head radius=3 position=start+(0;0;4) mass=9
+        !distance from=i;:head to=i;:spine_top fixed=4 strength=1000
+        !particle id=i;:spine_top position=start+(0;0;0) radius=2 mass=4
+        !distance from=i;:spine_top to=i;:left_shoulder fixed=4 strength=1000
+        !distance from=i;:spine_top to=i;:right_shoulder fixed=4 strength=1000
+        !particle id=i;:left_shoulder position=start+(-4;0;0)
+        !particle id=i;:right_shoulder position=start+(4;0;0)
+        !distance from=i;:left_shoulder to=i;:right_shoulder fixed=8 strength=1000
+        !distance from=i;:left_shoulder to=i;:left_elbow fixed=4 strength=1000
+        !distance from=i;:right_shoulder to=i;:right_elbow fixed=4 strength=1000
+        !particle id=i;:left_elbow position=start+(-10;0;0)
+        !particle id=i;:right_elbow position=start+(10;0;0)
+        !distance from=i;:spine_top to=i;:left_hand fixed=16 strength=500
+        !distance from=i;:spine_top to=i;:left_hand fixed=16 strength=500
+        !distance from=i;:left_elbow to=i;:left_hand fixed=6 strength=1000
+        !distance from=i;:right_elbow to=i;:right_hand fixed=6 strength=1000
+        !distance from=i;:left_hand to=i;:right_hand min=16 strength=500
+        !particle id=i;:left_hand position=start+(-16;0;0)
+        !particle id=i;:right_hand position=start+(16;0;0)
+        !distance from=i;:spine_top to=i;:spine_bottom fixed=10 strength=1000
+        !distance from=i;:head to=i;:spine_bottom fixed=14 strength=1000
+        !particle id=i;:spine_bottom position=start+(0;0;-10) radius=2 mass=4
+        !distance from=i;:spine_bottom to=i;:left_hip fixed=4 strength=1000
+        !distance from=i;:spine_bottom to=i;:right_hip fixed=4 strength=1000
+        !particle id=i;:left_hip position=start+(-4;0;-10)
+        !particle id=i;:right_hip position=start+(4;0;-10)
+        !distance from=i;:left_hip to=i;:right_hip fixed=8 strength=1000
+        !distance from=i;:left_hip to=i;:left_knee fixed=8 strength=1000
+        !distance from=i;:right_hip to=i;:right_knee fixed=8 strength=1000
+        !particle id=i;:left_knee position=start+(-4;0;-18)
+        !particle id=i;:right_knee position=start+(4;0;-18)
+        !distance from=i;:left_knee to=i;:left_foot fixed=8 strength=1000
+        !distance from=i;:right_knee to=i;:right_foot fixed=8 strength=1000
+        !distance from=i;:left_hip to=i;:left_foot fixed=16 strength=500
+        !distance from=i;:right_hip to=i;:right_foot fixed=16 strength=500
+        !particle id=i;:left_foot position=start+(-4;0;-26)
+        !particle id=i;:right_foot position=start+(4;0;-26)
+    for i in ..SEGMENTS
+        let x;y=polar(i/SEGMENTS)
+        !barrier position=(TUBE-1)*(x;y);0 normal=-(x;y);0
+    !barrier position=0;0;BOTTOM-3 normal=0;0;1 restitution=0.1
+    !constant acceleration=0;0;-200
+    !collision strength=500
+    !drag strength=0.02
+    !random strength=50
+
+!window size=SIZE
+    !canvas3d id=:top samples=4 viewpoint=0;-300;100 focus=0;0;100 up=0;0;1 near=1 far=500 fov=60/360 fog_color=0 fog_min=300 fog_max=500
+        !light color=0.25
+        !light color=0.75 direction=1;1;0
+        !material color=0;1;0
+            for i in START..END
+                if $(:doll;i;:head)
+                    !sphere position=$(:doll;i;:head) size=3
+                    !cylinder start=$(:doll;i;:head) end=$(:doll;i;:spine_top)
+                    !sphere position=$(:doll;i;:spine_top) size=2
+                    !cylinder start=$(:doll;i;:spine_top) end=$(:doll;i;:left_shoulder)
+                    !cylinder start=$(:doll;i;:spine_top) end=$(:doll;i;:right_shoulder)
+                    !sphere position=$(:doll;i;:left_shoulder)
+                    !sphere position=$(:doll;i;:right_shoulder)
+                    !cylinder start=$(:doll;i;:left_shoulder) end=$(:doll;i;:left_elbow)
+                    !cylinder start=$(:doll;i;:right_shoulder) end=$(:doll;i;:right_elbow)
+                    !sphere position=$(:doll;i;:left_elbow)
+                    !sphere position=$(:doll;i;:right_elbow)
+                    !cylinder start=$(:doll;i;:left_elbow) end=$(:doll;i;:left_hand)
+                    !cylinder start=$(:doll;i;:right_elbow) end=$(:doll;i;:right_hand)
+                    !sphere position=$(:doll;i;:left_hand)
+                    !sphere position=$(:doll;i;:right_hand)
+                    !cylinder start=$(:doll;i;:spine_top) end=$(:doll;i;:spine_bottom) radius=2
+                    !sphere position=$(:doll;i;:spine_bottom) size=2
+                    !cylinder start=$(:doll;i;:spine_bottom) end=$(:doll;i;:left_hip)
+                    !cylinder start=$(:doll;i;:spine_bottom) end=$(:doll;i;:right_hip)
+                    !sphere position=$(:doll;i;:left_hip)
+                    !sphere position=$(:doll;i;:right_hip)
+                    !cylinder start=$(:doll;i;:left_hip) end=$(:doll;i;:left_knee)
+                    !cylinder start=$(:doll;i;:right_hip) end=$(:doll;i;:right_knee)
+                    !sphere position=$(:doll;i;:left_knee)
+                    !sphere position=$(:doll;i;:right_knee)
+                    !cylinder start=$(:doll;i;:left_knee) end=$(:doll;i;:left_foot)
+                    !cylinder start=$(:doll;i;:right_knee) end=$(:doll;i;:right_foot)
+                    !sphere position=$(:doll;i;:left_foot)
+                    !sphere position=$(:doll;i;:right_foot)
+            if BOTTOM > 0
+                !transform scale=1;1;BOTTOM
+                    !cylinder position=0;0;0.5 size=TUBE-1;TUBE-1;1
+                !cylinder position=0;0;BOTTOM+1 size=TUBE-1;TUBE-1;2 transparency=0.2
+                !cylinder position=0;0;BOTTOM+2 size=TUBE-1;TUBE-1;2 transparency=0.1
+        !material color=0.2 transparency=0.95 shininess=100
+            !cylinder position=0;0;100 size=TUBE-1;TUBE-1;200 segments=SEGMENTS rotation=0;0;0.5/SEGMENTS invert=true
+            !cylinder position=0;0;100 size=TUBE;TUBE;200 segments=SEGMENTS rotation=0;0;0.5/SEGMENTS
+        !material color=0.1
+            !cylinder position=0 size=1000;1000;0.1
+    !record filename=('day7.mp4' if RECORD and beat>20) limit=30 codec=:hevc crf=20 hidden=true
+        !reference id=:top
