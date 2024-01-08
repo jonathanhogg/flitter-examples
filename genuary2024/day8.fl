@@ -4,6 +4,9 @@
 -- amplitude. Two of the frequency/phase values are continuously changed causing
 -- the system to swing between a simple and a more chaotic system.
 --
+-- Skia's antialiasing is criminally slow, so we don't turn it on unless we're
+-- recording a video.
+--
 -- Record a video with:
 -- flitter day8.fl --lockstep --runtime=30 --fps=30 --define 'RECORD=1080'
 
