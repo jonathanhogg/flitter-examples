@@ -12,15 +12,6 @@
 -- ground plane. The fog is included mainly as a cheap way to colour the sky
 -- and soften the boundary between the ground and the sky.
 --
--- Note that this demo leaks memory pretty badly. The problem is that each new
--- firework has a brand new set of particles. Although the physics engine ceases
--- to simulate the old ones that drop off the end of the list, the last position
--- and velocity of each particle is left in the state dictionary. Currently
--- there's no solution to this. You'd imagine reusing the old particles would
--- make sense, but there's no way of resetting their state. The upper limit
--- is bounded by the `total_fireworks` value - as thats the total number of
--- fireworks in the display.
---
 -- Record a video with:
 -- flitter day1.fl --lockstep --fps=30 --runtime=60 --define RECORD=720
 
