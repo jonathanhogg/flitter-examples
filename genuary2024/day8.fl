@@ -1,0 +1,36 @@
+-- Genuary day 8: Chaotic system
+--
+-- This demo is a harmonigraph. It simulates a double pendulum with a decaying
+-- amplitude. Two of the frequency/phase values are continuously changed causing
+-- the system to swing between a simple and a more chaotic system.
+--
+-- Record a video with:
+-- flitter day8.fl --lockstep --runtime=30 --fps=30 --define 'RECORD=1080'
+
+import bloom_filter from '../common/bloom.fl'
+
+let SIZE=RECORD*(1;1) or (1080;1080)
+    SCALE=hypot(SIZE)/2000
+    POINTS=10k
+    PATHS=100
+    TIMESCALE=50
+    AMPLITUDE=750
+    DECAY=0.07
+    FREQ=1.03;2; 1.03+sin(beat/60)/10;2
+    PHASE=beat/60;0; 0;0.25
+
+!window size=SIZE colorbits=16
+    @bloom_filter radius=10*SCALE id=:top
+        !canvas linear=true translate=SIZE/2 scale=SCALE antialias=RECORD composite=:add line_cap=:round
+            for i in ..PATHS
+                let cycle=beat/(0.5+beta(:period)[i])+uniform(:phase)[i]
+                    v=(i+1)/PATHS * (0.25 + 0.5*bounce(5*i/PATHS-beat/8))
+                    n=POINTS//PATHS
+                    t=TIMESCALE/PATHS*(i+(..n+1)/n)
+                    d=AMPLITUDE*exp(-DECAY*t)
+                    x=(sin(t*FREQ[0]+PHASE[0])+sin(t*FREQ[1]+PHASE[1]))*d
+                    y=(sin(t*FREQ[2]+PHASE[2])+sin(t*FREQ[3]+PHASE[3]))*d
+                !paint stroke_width=5*((1-i/PATHS)+0.1) color=hsl(0.6;0.6;v)
+                    !line curve=0.5 stroke=true points=zip(x, y)
+    !record filename=('day8.mp4' if RECORD) codec=:hevc crf=30 hidden=true
+        !reference id=:top
