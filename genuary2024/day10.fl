@@ -1,0 +1,86 @@
+-- Genuary day 10: Hexagonal
+--
+-- This demo is based on some work I am doing with artist Di Mainstone on a
+-- large climate-change related project. Hexagons are an emergent phenomena
+-- in much of nature. Here a set of particles repel each other with an
+-- electrostatic charge, while being constrained within a circle. The particles
+-- naturally space themselves out in a grid that results in hexagons when the
+-- points are used as centres for a voronoi diagram.
+--
+-- A Flitter physics system is used to simulate the points and then these are
+-- passed (along with some pseudo-random variation paraeters for each point)
+-- to a GLSL shader that draws the voronoi diagram. A simple edge-detection
+-- filter is placed over the top of this (see separate code for the
+-- implementation of that).
+--
+-- Record a video with:
+-- flitter day10.fl --lockstep --fps=30 --runtime=60 --define 'RECORD=720'
+
+%pragma tempo 60
+
+import edge_detect from '../common/edge.fl'
+
+let SIZE=RECORD*(1;1) or (1080;1080)
+    SCALE=hypot(SIZE)/100
+    NPOINTS=SIZE[0]*SIZE[1]/(10*SCALE*SCALE)//1
+    RADIUS=hypot(SIZE)/3
+
+let VORONOI="""
+#version 330
+
+const int NPOINTS = """;NPOINTS;""";
+const float MAX_DISTANCE = """;hypot(SIZE);""";
+
+in vec2 coord;
+out vec4 color;
+
+uniform vec2 size;
+uniform vec4 points[NPOINTS];
+
+vec3 hsv2rgb(vec3 c) {
+  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+void main() {
+    vec2 p = coord*size;
+    int index0=-1, index1=-1;
+    float distance0=MAX_DISTANCE, distance1=MAX_DISTANCE;
+    for (int i = 0; i < NPOINTS; i++) {
+        float d = distance(p, points[i].xy);
+        if (d < distance0) {
+            distance1 = distance0; index1 = index0;
+            distance0 = d; index0 = i;
+        } else if (d < distance1) {
+            distance1 = d; index1 = i;
+        }
+    }
+    vec2 p0 = points[index0].xy, p1 = points[index1].xy;
+    vec2 v1 = normalize(p1 - p0);
+    float a = dot(p - p0, v1), b = dot(p1 - p, v1);
+    float k = pow(1 - a/b, 0.75);
+    if (b - a > points[index0].w) {
+        color = vec4(hsv2rgb(vec3(points[index0].z, 1, k)), 1);
+    } else {
+        discard;
+    }
+}
+"""
+
+!physics dimensions=2 state=:points
+    !drag strength=10m
+    !electrostatic strength=10k ease=1
+    !random strength=20
+    !anchor id=:middle position=SIZE/2
+    for i in ..NPOINTS
+        !particle id=i position=SIZE*uniform(:pos;i)[..2]
+        !distance from=:middle to=i max=RADIUS strength=100
+
+!window size=SIZE colorbits=8
+    !shader id=:top fragment=read('../glsl/color_adjust.frag') brightness=0.5 contrast=2
+        @edge_detect radius=SCALE/3
+            let points=($(:points;i);0.05+0.05*beta(:hue)[i];SCALE*1.5*beta(:line)[i]) for i in ..NPOINTS
+            !shader fragment=VORONOI points=points
+    !record filename=('day10.mp4' if RECORD) codec=:hevc crf=30 hidden=true
+        !reference id=:top

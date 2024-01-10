@@ -1,0 +1,13 @@
+
+
+func edge_detect(nodes, radius=0, blursize=null, colorbits=null, composite=null, id=null)
+    let rx;ry=radius*(1;1)
+    !shader composite=:difference colorbits=colorbits id=id
+        if len(nodes) == 1
+            nodes id=:blur_source
+        else
+            !shader id=:blur_source composite=composite
+                nodes
+        !shader#blur size=blursize horizontal=false radius=ry fragment=read("../glsl/blur.frag")
+            !shader#blur horizontal=true radius=rx fragment=read("../glsl/blur.frag")
+                !reference id=:blur_source
