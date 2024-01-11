@@ -9,31 +9,33 @@
 %pragma tempo 60
 
 let SIZE=RECORD or 1080
-    DOLLS=120 END=min(DOLLS, beat//1) START=max(0, END-DOLLS)
-    SEGMENTS=64 TUBE=20 BOTTOM=0 --25+beat/3
-
-let joints=(:head;4; :spine_top;2; :left_shoulder;2; :right_shoulder;2; :left_elbow;2; :right_elbow;2; :left_hand;2; :right_hand;2;
+    DOLLS=120
+    END=min(DOLLS, beat//1)
+    START=max(0, END-DOLLS)
+    SEGMENTS=32
+    TUBE=20
+    JOINTS=(:head;4; :spine_top;2; :left_shoulder;2; :right_shoulder;2; :left_elbow;2; :right_elbow;2; :left_hand;2; :right_hand;2;
             :spine_bottom;3; :left_hip;2; :right_hip;2; :left_knee;2; :right_knee;2; :left_foot;2; :right_foot;2)
-    bones=(:head;:spine_top;3;2; :spine_top;:left_shoulder;3;2; :spine_top;:right_shoulder;3;2; :left_shoulder;:left_elbow;4;2; :right_shoulder;:right_elbow;4;2;
+    BONES=(:head;:spine_top;3;2; :spine_top;:left_shoulder;3;2; :spine_top;:right_shoulder;3;2; :left_shoulder;:left_elbow;4;2; :right_shoulder;:right_elbow;4;2;
            :left_elbow;:left_hand;4;2; :right_elbow;:right_hand;4;2; :spine_top;:spine_bottom;8;3; :spine_bottom;:left_hip;2;2; :spine_bottom;:right_hip;2;2;
            :left_hip;:left_knee;4;2; :right_hip;:right_knee;4;2; :left_knee;:left_foot;4;2; :right_knee;:right_foot;4;2)
 
 !physics state=:doll dimensions=3
     for i in START..END
-        let start=(beta(:start;i)[..3]-0.5)*TUBE*2 + (0;0;500)
-        for id;r in joints
+        let age=beat-i
+            start=(beta(:start;i)[..3]-0.5)*TUBE*2 + (0;0;500)
+        for id;r in JOINTS
             !particle id=i;id radius=r charge=r mass=r position=start+uniform(i;id)[..3]*10
-        for from;to;d;r in bones
-            !distance from=i;from to=i;to fixed=d strength=500
+        for from;to;d;r in BONES
+            !distance from=i;from to=i;to fixed=d strength=map(linear(age/10), 500, 1k)
     for i in ..SEGMENTS
         let x;y=polar(i/SEGMENTS)
-        !barrier position=(TUBE-1)*(x;y);0 normal=-(x;y);0 restitution=0.9
-    !barrier position=0;0;BOTTOM normal=0;0;1 restitution=0.1
-    !constant acceleration=0;0;-25
-    !electrostatic strength=25
+        !barrier position=(TUBE-1)*(x;y);0 normal=-(x;y);0 restitution=0.5
+    !barrier position=0;0;0 normal=0;0;1 restitution=0.1
+    !constant acceleration=0;0;-50
+    !electrostatic strength=10
     !collision strength=1k
     !drag strength=0.004
-    !random strength=1
 
 !window size=SIZE colorbits=16
     !canvas3d id=:top samples=4 viewpoint=0;-300;100 focus=0;0;100 up=0;0;1 near=1 far=500 fov=60/360 fog_color=0 fog_min=300 fog_max=500
@@ -42,19 +44,15 @@ let joints=(:head;4; :spine_top;2; :left_shoulder;2; :right_shoulder;2; :left_el
         !material color=0;1;0
             for i in START..END
                 if $(:doll;i;:head)
-                    for id;r in joints
+                    for id;r in JOINTS
                         !sphere position=$(:doll;i;id) size=r
-                    for from;to;d;r in bones
+                    for from;to;d;r in BONES
                         !cylinder start=$(:doll;i;from) end=$(:doll;i;to) radius=r
-            if BOTTOM > 0
-                !transform scale=1;1;BOTTOM
-                    !cylinder position=0;0;0.5 size=TUBE-1;TUBE-1;1
-                !cylinder position=0;0;BOTTOM+1 size=TUBE-1;TUBE-1;2 transparency=0.2
-                !cylinder position=0;0;BOTTOM+2 size=TUBE-1;TUBE-1;2 transparency=0.1
-        !material color=0.2 transparency=0.95 shininess=100
-            !cylinder position=0;0;100 size=TUBE-1;TUBE-1;200 segments=SEGMENTS rotation=0;0;0.5/SEGMENTS invert=true
-            !cylinder position=0;0;100 size=TUBE;TUBE;200 segments=SEGMENTS rotation=0;0;0.5/SEGMENTS
+        !material color=0.2 transparency=0.9 shininess=100
+            !transform
+                !cylinder position=0;0;100 size=TUBE-1;TUBE-1;200 invert=true
+                !cylinder position=TUBE;TUBE;200
         !material color=0.1
-            !cylinder position=0;0;-0.5 size=1000;1000;1
+            !cylinder position=0;0;-0.5 size=500;500;1
     !record filename=('day7.mp4' if RECORD and beat>10) limit=60 codec=:hevc crf=20 hidden=true
         !reference id=:top
