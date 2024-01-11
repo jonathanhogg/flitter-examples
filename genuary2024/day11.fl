@@ -21,7 +21,7 @@ let SIZE=RECORD*(1;1) or (1080;1080)
     LOOPS=LOOP_TIME/CYCLE_TIME
 
 !window size=SIZE colorbits=16
-    @feedback_filter id=:top decay=CYCLE_TIME/3
+    @feedback_filter id=:top mixer=0.01 timebase=CYCLE_TIME
         !canvas linear=true
             !rect size=SIZE color=0.02 fill=true
             for y in ..ROWS
