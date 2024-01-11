@@ -14,7 +14,7 @@
 -- implementation of that).
 --
 -- Record a video with:
--- flitter day10.fl --lockstep --fps=30 --runtime=60 --define 'RECORD=720'
+-- flitter day10.fl --lockstep --fps=30 --runtime=30 --define 'RECORD=720'
 
 %pragma tempo 60
 
@@ -22,8 +22,8 @@ import edge_detect from '../common/edge.fl'
 
 let SIZE=RECORD*(1;1) or (1080;1080)
     SCALE=hypot(SIZE)/100
-    NPOINTS=SIZE[0]*SIZE[1]/(10*SCALE*SCALE)//1
-    RADIUS=hypot(SIZE)/3
+    RADIUS=hypot(SIZE)/4
+    NPOINTS=500
 
 let VORONOI="""
 #version 330
@@ -69,18 +69,18 @@ void main() {
 """
 
 !physics dimensions=2 state=:points
-    !drag strength=10m
-    !electrostatic strength=10k ease=1
-    !random strength=20
+    !drag strength=10m ease=30
+    !electrostatic strength=5k ease=5
+    -- !random strength=20
     !anchor id=:middle position=SIZE/2
     for i in ..NPOINTS
         !particle id=i position=SIZE*uniform(:pos;i)[..2]
-        !distance from=:middle to=i max=RADIUS strength=100
+        !distance from=:middle to=i max=RADIUS strength=50
 
-!window size=SIZE colorbits=8
+!window size=SIZE colorbits=16
     !shader id=:top fragment=read('../glsl/color_adjust.frag') brightness=0.5 contrast=2
         @edge_detect radius=SCALE/3
             let points=($(:points;i);0.05+0.05*beta(:hue)[i];SCALE*1.5*beta(:line)[i]) for i in ..NPOINTS
             !shader fragment=VORONOI points=points
-    !record filename=('day10.mp4' if RECORD) codec=:hevc crf=30 hidden=true
+    !record filename=('day10.mp4' if RECORD and beat) codec=:hevc crf=29 hidden=true
         !reference id=:top
