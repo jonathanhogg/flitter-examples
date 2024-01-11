@@ -71,7 +71,7 @@ void main() {
 !physics dimensions=2 state=:points
     !drag strength=10m ease=30
     !electrostatic strength=5k ease=5
-    -- !random strength=20
+    !random strength=20
     !anchor id=:middle position=SIZE/2
     for i in ..NPOINTS
         !particle id=i position=SIZE*uniform(:pos;i)[..2]

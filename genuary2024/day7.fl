@@ -16,21 +16,22 @@ let SIZE=RECORD or 1080
     TUBE=20
     JOINTS=(:head;4; :spine_top;2; :left_shoulder;2; :right_shoulder;2; :left_elbow;2; :right_elbow;2; :left_hand;2; :right_hand;2;
             :spine_bottom;3; :left_hip;2; :right_hip;2; :left_knee;2; :right_knee;2; :left_foot;2; :right_foot;2)
-    BONES=(:head;:spine_top;3;2; :spine_top;:left_shoulder;3;2; :spine_top;:right_shoulder;3;2; :left_shoulder;:left_elbow;4;2; :right_shoulder;:right_elbow;4;2;
-           :left_elbow;:left_hand;4;2; :right_elbow;:right_hand;4;2; :spine_top;:spine_bottom;8;3; :spine_bottom;:left_hip;2;2; :spine_bottom;:right_hip;2;2;
+    BONES=(:head;:spine_top;3;2; :spine_top;:left_shoulder;3;2; :spine_top;:right_shoulder;3;2; :left_shoulder;:right_shoulder;6;2;
+           :left_shoulder;:left_elbow;4;2; :right_shoulder;:right_elbow;4;2; :left_elbow;:left_hand;4;2; :right_elbow;:right_hand;4;2;
+           :spine_top;:spine_bottom;8;3; :spine_bottom;:left_hip;2;2; :spine_bottom;:right_hip;2;2; :left_hip;:right_hip;4;2;
            :left_hip;:left_knee;4;2; :right_hip;:right_knee;4;2; :left_knee;:left_foot;4;2; :right_knee;:right_foot;4;2)
 
-!physics state=:doll dimensions=3
+!physics state=:doll dimensions=3 resolution=1/120 if not realtime
     for i in START..END
         let age=beat-i
-            start=(beta(:start;i)[..3]-0.5)*TUBE*2 + (0;0;500)
+            start=(beta(:start;i)[..3]-0.5)*TUBE*2 + (0;0;600)
         for id;r in JOINTS
             !particle id=i;id radius=r charge=r mass=r position=start+uniform(i;id)[..3]*10
         for from;to;d;r in BONES
-            !distance from=i;from to=i;to fixed=d strength=map(linear(age/10), 500, 1k)
+            !distance from=i;from to=i;to fixed=d strength=2k
     for i in ..SEGMENTS
         let x;y=polar(i/SEGMENTS)
-        !barrier position=(TUBE-1)*(x;y);0 normal=-(x;y);0 restitution=0.5
+        !barrier position=(TUBE-1)*(x;y);0 normal=-(x;y);0 restitution=0.9
     !barrier position=0;0;0 normal=0;0;1 restitution=0.1
     !constant acceleration=0;0;-50
     !electrostatic strength=10
