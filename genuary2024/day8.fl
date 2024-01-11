@@ -10,7 +10,7 @@
 -- Record a video with:
 -- flitter day8.fl --lockstep --runtime=30 --fps=30 --define 'RECORD=1080'
 
-import bloom_filter from '../common/bloom.fl'
+import bloom_filter from '../common/filters.fl'
 
 let SIZE=RECORD*(1;1) or (1080;1080)
     SCALE=hypot(SIZE)/2000

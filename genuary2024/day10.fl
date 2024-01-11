@@ -18,7 +18,7 @@
 
 %pragma tempo 60
 
-import edge_detect from '../common/edge.fl'
+import edge_detect from '../common/filters.fl'
 
 let SIZE=RECORD*(1;1) or (1080;1080)
     SCALE=hypot(SIZE)/100

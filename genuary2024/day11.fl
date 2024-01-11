@@ -9,6 +9,8 @@
 
 %pragma tempo 60
 
+import feedback_filter from '../common/filters.fl'
+
 let SIZE=RECORD*(1;1) or (1080;1080)
     ROW_HEIGHT=36
     ROWS=SIZE[1]//ROW_HEIGHT
@@ -19,7 +21,7 @@ let SIZE=RECORD*(1;1) or (1080;1080)
     LOOPS=LOOP_TIME/CYCLE_TIME
 
 !window size=SIZE colorbits=16
-    !shader id=:top fragment=read('../glsl/feedback.frag') mixing=0.7
+    @feedback_filter id=:top decay=CYCLE_TIME/3
         !canvas linear=true
             !rect size=SIZE color=0.02 fill=true
             for y in ..ROWS
