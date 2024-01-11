@@ -1,0 +1,40 @@
+-- Genuary day 11: In the style of Anni Albers
+--
+-- Anni Albers was a pretty groundbreaking artist of the Bauhaus who worked in
+-- textiles (primarily because that was all women were allowed to do at the
+-- school).
+--
+-- Record a video with:
+-- flitter day11.fl --lockstep --runtime=70 --fps=60 --define 'RECORD=1080'
+
+%pragma tempo 60
+
+let SIZE=RECORD*(1;1) or (1080;1080)
+    ROW_HEIGHT=36
+    ROWS=SIZE[1]//ROW_HEIGHT
+    TRIANGLE_WIDTH=ROW_HEIGHT*2
+    MAX_TRIANGLES=SIZE[0]/TRIANGLE_WIDTH
+    CYCLE_TIME=10
+    LOOP_TIME=60
+    LOOPS=LOOP_TIME/CYCLE_TIME
+
+!window size=SIZE colorbits=16
+    !shader id=:top fragment=read('../glsl/feedback.frag') mixing=0.7
+        !canvas linear=true
+            !rect size=SIZE color=0.02 fill=true
+            for y in ..ROWS
+                let cycle=beat/CYCLE_TIME-y/ROWS
+                    current=cycle%LOOPS
+                    previous=(cycle-1)%LOOPS
+                    hue=uniform(:hues)[current]
+                !transform translate=0;y*ROW_HEIGHT
+                    let starts=(accumulate(1+uniform(:row;current;y)[..MAX_TRIANGLES]*2//1/2)-1)*TRIANGLE_WIDTH
+                    for x;start in zip(..MAX_TRIANGLES, starts)
+                        if start + TRIANGLE_WIDTH <= SIZE[0]
+                            !group translate=start;0 color=hsv(hue+uniform(:hue;current;y)[x]*2//1/2;0.75;1)
+                                if uniform(:flip;current;y)[x] > 0.7
+                                    !line points=0;ROW_HEIGHT;TRIANGLE_WIDTH;ROW_HEIGHT;TRIANGLE_WIDTH/2;0 close=true fill=true
+                                else
+                                    !line points=0;0;TRIANGLE_WIDTH;0;TRIANGLE_WIDTH/2;ROW_HEIGHT close=true fill=true
+    !record filename=('day11.mp4' if RECORD and beat>=CYCLE_TIME) codec=:hevc crf=25 hidden=true
+        !reference id=:top
