@@ -1,0 +1,23 @@
+-- Genuary day 16: Draw 10,000 of something
+--
+-- Record a video with:
+-- flitter day11.fl --lockstep --runtime=70 --fps=60 --define 'RECORD=1080'
+
+%pragma tempo 60
+
+let SIZE=RECORD*(1;1) or (1080;1080)
+    N=20
+    M=10k//N
+
+!window size=SIZE
+    !canvas3d id=:top samples=8 viewpoint=0;0;100 fov=40/360 rotate=beat/(30;20;15)
+        !light color=.5 direction=1;0;0
+        !light color=.5 direction=0;1;0
+        !light color=.5 direction=0;0;1
+        !material color=0.944;0.776;0.373 metal=1 roughness=.2
+            for i in ..N
+                for j in ..M
+                    !transform rotate_y=(i-j/M)/N translate=20;0;0 rotate_z=j/M
+                        !cone segments=3 flat=true position=7.5;0;0 size=2;2;3
+    !record filename=('day16.mp4' if RECORD) codec=:hevc crf=25 hidden=true
+        !reference id=:top

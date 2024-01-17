@@ -1,17 +1,17 @@
 -- Do or Donut
 --
--- This example is based on code written by Jonathan for a live performance of
--- Feral Five's song "Roll It With Me". Coloured specular reflections are
--- used to give the effect of gold. A torus is easy to create in Flitter with
--- rotation transforms. The original code had balls of light whizzing around
--- inside the torus, but they are omitted here to save space.
+-- This example is based on code written for a live performance of Feral Five's
+-- song "Roll It With Me". A metallic texture with an approximation of the
+-- colour of gold is used. A torus is easy to create in Flitter with rotation
+-- transforms. The original code had balls of light whizzing around inside the
+-- torus, but they are omitted here to save space.
 
-let g=3/(3;4;12) b=beat
+let b=beat
 !window size=1080
-  !canvas3d viewpoint=0;0;100 fov=1/8 rotate=b/30;b/20;0 color=g/400 specular=g shininess=100
-    (!light color=2 direction=i==0;i==1;i==2) for i in ..3
+  !canvas3d viewpoint=0;0;200 fov=1/8 rotate=b/30;b/20;0 color=3/(3;4;12) metal=1 roughness=0.2
+    (!light color=1 direction=i==0;i==1;i==2) for i in ..3
     for i in ..50
-      !transform rotate_y=i/50 translate=25;0;0
+      !transform rotate_y=i/50 translate=50;0;0
         for j in ..25
-          !transform rotate_z=j/25+sine(b/30+uniform(:p)[i])
-            !box flat=true position=10;0;0 size=.5;2;1
+          !transform rotate_z=j/25+sine(b/30+uniform()[i])
+            !box position=20;0;0 size=1;4;2
