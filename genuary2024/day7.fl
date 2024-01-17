@@ -31,7 +31,7 @@ let SIZE=RECORD or 1080
             !distance from=i;from to=i;to fixed=d strength=2k
     for i in ..SEGMENTS
         let x;y=polar(i/SEGMENTS)
-        !barrier position=(TUBE-1)*(x;y);0 normal=-(x;y);0 restitution=0.9
+        !barrier position=TUBE*(x;y);0 normal=-(x;y);0 restitution=0.9
     !barrier position=0;0;0 normal=0;0;1 restitution=0.1
     !constant acceleration=0;0;-50
     !electrostatic strength=10
@@ -41,7 +41,13 @@ let SIZE=RECORD or 1080
 !window size=SIZE colorbits=16
     !canvas3d id=:top samples=4 viewpoint=0;-300;100 focus=0;0;100 up=0;0;1 near=1 far=500 fov=60/360 fog_color=0 fog_min=300 fog_max=500
         !light color=0.25
-        !light color=0.75 direction=1;1;0
+        !light color=0.75 direction=1;0;0
+        !material color=0.1
+            !cylinder position=0;0;-0.5 size=500;500;1
+        !material color=1 transparency=0.99 shininess=300
+            !transform translate=0;0;100
+                !cylinder position=0;0.1;0 size=TUBE;TUBE;200 invert=true
+                !cylinder size=TUBE+1;TUBE+1;200
         !material color=0;1;0
             for i in START..END
                 if $(:doll;i;:head)
@@ -49,11 +55,5 @@ let SIZE=RECORD or 1080
                         !sphere position=$(:doll;i;id) size=r
                     for from;to;d;r in BONES
                         !cylinder start=$(:doll;i;from) end=$(:doll;i;to) radius=r
-        !material color=0.2 transparency=0.9 shininess=100
-            !transform
-                !cylinder position=0;0;100 size=TUBE-1;TUBE-1;200 invert=true
-                !cylinder position=TUBE;TUBE;200
-        !material color=0.1
-            !cylinder position=0;0;-0.5 size=500;500;1
     !record filename=('day7.mp4' if RECORD and beat>10) limit=60 codec=:hevc crf=20 hidden=true
         !reference id=:top
