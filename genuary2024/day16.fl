@@ -1,7 +1,26 @@
 -- Genuary day 16: Draw 10,000 of something
 --
+-- Lots of interesting patterns fall out of drawing very large numbers of
+-- overlapping objects. Here 10,000 tetrahedrons are drawn in a twisted torus
+-- arrangement. As so many objects are being rendered, they become an almost
+-- continuous, sinuous form.
+--
+-- Note the hack here for getting a tetrahedron: drawing a cone with only
+-- 3 segments and using flat shading. Cone primitives are constructed as
+-- `segments` triangles forming the sides and the same number of triangles
+-- forming the base. The sides are normally rendered with smooth shading, where
+-- the surface normal is varied across the surface of each triangle. With
+-- sufficient segments (the default is 32) the result will look like a smooth
+-- cone. Enabling `flat` shading will turn off the normal smooth shading of the
+-- sides so that each triangle has a single unchanging surface normal.
+--
+-- With drawing so many objects here, packed so closely together, better visual
+-- results are actually obtained with flat shading. Reducing the number of
+-- objects, and playing with increasing the number of cone segments and using
+-- smooth shading produces lots of different interesting ribbed surfaces.
+--
 -- Record a video with:
--- flitter day11.fl --lockstep --runtime=70 --fps=60 --define 'RECORD=1080'
+-- flitter day16.fl --lockstep --runtime=60 --fps=30 --define 'RECORD=1080'
 
 %pragma tempo 60
 
