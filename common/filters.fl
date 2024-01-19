@@ -1,8 +1,8 @@
 
--- Simple bloom filter consisting of a contrast adjustment, gaussian blur and then
+-- Simple bloom filter consisting of a color adjustment, gaussian blur and then
 -- a 'lighten' composite of the result with the original
 
-func bloom_filter(nodes, radius=0, sigma=0.75, contrast=1, exposure=0, blursize=null, colorbits=null, composite=null, id=null)
+func bloom_filter(nodes, radius=0, sigma=0.6, contrast=1, exposure=-1, blursize=null, colorbits=null, composite=null, id=null)
     let rx;ry=radius*(1;1)
     !shader#lighten id=id colorbits=colorbits composite=:lighten
         if len(nodes) == 1

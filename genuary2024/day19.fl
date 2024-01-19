@@ -1,0 +1,54 @@
+-- Genuary day 19: Flocking
+--
+-- This is a pretty basic flocking algorithm. Electrostatic charge (with a max
+-- distance) is used to create local separation, and then a per-particle force
+-- is applied for cohesion (force towards centre of mass) and alignment (force
+-- in direction of average heading). The alignment is scaled with distance so
+-- that particles further away from the centre wander around a bit more. A
+-- random (brownian) force is applied to create some variation. Each particle
+-- is constrained to remain within a sphere so that they don't wander too far
+-- off screen.
+--
+-- The direction and length of the cone follows the velocity of each particle
+-- and the colour temperature scales with the speed. The first 100 particles
+-- (which is as random as any other selection) are also lights to create some
+-- reflections on the surrounding particles.
+--
+-- Record a video with:
+-- flitter day19.fl --lockstep --runtime=180 --fps=30 --define 'RECORD=1080'
+
+%pragma tempo 60
+
+import bloom_filter from '../common/filters.fl'
+
+let SIZE=RECORD*(1;1) or (1080;1080)
+    N=1000
+    LIGHTS=100
+
+!physics state=:boid dimensions=3 resolution=1/60
+    !drag strength=2m
+    !electrostatic strength=100 max_distance=10
+    !random strength=25
+    !anchor id=:middle position=0
+    let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
+        heading=normalize(sum($(:boid;i;:velocity) for i in ..N, 3))
+    for i in ..N
+        let clump=(centre_of_mass-$(:boid;i))/200
+            distance=hypot(clump)
+        !particle id=i position=(beta(:pos;i)[..3]-0.5)*400 force=clump+heading/distance
+        !distance from=:middle to=i max=250
+
+!window size=SIZE
+    @bloom_filter id=:top radius=min(SIZE)//120 exposure=-1
+        !canvas3d samples=4 viewpoint=0;0;300 near=1 far=600 fog_max=600 max_lights=LIGHTS
+            for i in ..N
+                let velocity=$(:boid;i;:velocity)
+                    color=colortemp(hypot(velocity)*55)
+                !transform translate=$(:boid;i)
+                    !material color=0.5 metal=true roughness=0.3 emissive=color*200
+                        !sphere
+                        !cone start=0 end=velocity/5
+                    if i < LIGHTS
+                        !light position=0 color=color*(20M/LIGHTS)
+    !record filename=('day19.mp4' if RECORD and beat > 120) codec=:hevc crf=30 hidden=true
+        !reference id=:top
