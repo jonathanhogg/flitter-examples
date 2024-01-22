@@ -1,0 +1,60 @@
+-- Genuary day 22: Point, line, plane
+--
+-- This renders a variant of the "connected dots" Lovebyte Tiny Code Christmas
+-- challenge as seen from 6 orthographic cameras rotating around the scene.
+-- These 6 views are then combined into a texture that is wrapped around a
+-- rotating cube in a separate 3D scene.
+--
+-- Record a video with:
+-- flitter day22.fl --lockstep --runtime=60 --fps=60 --define 'RECORD=1080'
+
+
+%pragma tempo 60
+
+let SIZE=1080 or RECORD
+    SIDE=SIZE*2/3
+    N=100
+    R=300
+    D=100
+
+!physics dimensions=3 state=:dot
+    !anchor id=:middle
+    !collision strength=100
+    for i in ..N
+        !particle id=i position=(beta(:p;i)[..3]-.5)*R*2 radius=10
+        !distance from=:middle to=i max=R-20 strength=100
+    !drag strength=0.1m
+    !random strength=50
+
+!window size=SIZE
+    let rot=beat/30
+    !canvas3d size=SIDE orthographic=true far=R*2 width=R*2 fog_max=R*2 color=1 camera_id=:check hidden=true
+        !camera id=:check size=SIZE width=R*3 position=0;0;R*3 up=0;1;0 near=1 far=R*6 fog_max=0 samples=4
+        !transform rotate=rot scale=R
+            !camera id=:view;0 position=0;0;+1 up=0;+1;0 secondary=true
+            !camera id=:view;1 position=0;+1;0 up=0;0;-1 secondary=true
+            !camera id=:view;2 position=+1;0;0 up=0;0;-1 secondary=true
+            !camera id=:view;3 position=0;0;-1 up=-1;0;0 secondary=true
+            !camera id=:view;4 position=-1;0;0 up=0;0;+1 secondary=true
+            !camera id=:view;5 position=0;-1;0 up=0;0;+1 secondary=true
+        !light color=1 direction=0;0;-1
+        for i in ..N
+            let a=$(:dot;i)
+            !sphere position=a size=10
+            for j in i+1..N
+                let b=$(:dot;j)
+                    d=hypot(a-b)
+                if d < D
+                    !cylinder start=a end=b radius=2 transparency=snap(d/D)
+    !canvas id=:cube_map size=SIDE*(6;1) hidden=true
+        for i in ..6
+            !transform translate=(i;0)*SIDE
+                !rect size=SIDE color=0 fill=true
+                !image size=SIDE texture_id=:view;i
+                !rect size=SIDE color=1 stroke=true stroke_width=5
+    !canvas3d id=:top size=SIZE viewpoint=0;0;R*5 up=0;1;0 fov=53/360 far=R*10 fog_min=R*5 fog_max=R*7 samples=4 hidden=false
+        !light color=1
+        !transform rotate=rot
+            !box size=R*2.5 texture_id=:cube_map
+    !record filename=('day22.mp4' if RECORD and beat > 30) codec=:hevc crf=25 hidden=true
+        !reference id=:top
