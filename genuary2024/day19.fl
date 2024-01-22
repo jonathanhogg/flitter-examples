@@ -15,40 +15,53 @@
 -- reflections on the surrounding particles.
 --
 -- Record a video with:
--- flitter day19.fl --lockstep --runtime=180 --fps=30 --define 'RECORD=1080'
+-- flitter day19.fl --lockstep --runtime=120 --fps=30 --define 'RECORD=1080'
 
 %pragma tempo 60
 
 import bloom_filter from '../common/filters.fl'
 
 let SIZE=RECORD*(1;1) or (1080;1080)
-    N=1000
-    LIGHTS=100
+    N=1500 if RECORD else 1000
+    LIGHTS=150 if RECORD else 100
 
-!physics state=:boid dimensions=3 resolution=1/60
+let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
+    heading=normalize(sum($(:boid;i;:velocity) for i in ..N, 3))
+
+!physics state=:boid dimensions=3
     !drag strength=2m
-    !electrostatic strength=100 max_distance=10
-    !random strength=25
+    !electrostatic strength=50 max_distance=10
     !anchor id=:middle position=0
-    let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
-        heading=normalize(sum($(:boid;i;:velocity) for i in ..N, 3))
+    let T=beat/5
+        R=20*(..N)/N
+        vx=noise(:vx, R, T)
+        vy=noise(:vy, R, T)
+        vz=noise(:vz, R, T)
     for i in ..N
-        let clump=(centre_of_mass-$(:boid;i))/200
+        let clump=(centre_of_mass-$(:boid;i))/100
             distance=hypot(clump)
-        !particle id=i position=(beta(:pos;i)[..3]-0.5)*400 force=clump+heading/distance
+            variation=(vx[i];vy[i];vz[i])*5
+        !particle id=i position=(beta(:pos;i)[..3]-0.5)*400 force=variation+clump+heading/distance
         !distance from=:middle to=i max=250
 
 !window size=SIZE
     @bloom_filter id=:top radius=min(SIZE)//120 exposure=-1
-        !canvas3d samples=4 viewpoint=0;0;300 near=1 far=600 fog_max=600 max_lights=LIGHTS
+        !canvas3d samples=4 near=0.1 far=600 fog_max=600 max_lights=LIGHTS \
+                  camera_id=(:outside;:outside;:mass_forward;:mass_back;:outside_wide;:boidseye)[beat//10%6]
+            !camera id=:outside position=0;0;300 focus=centre_of_mass/2 fov=90/360
+            !camera id=:outside_wide position=0;0;260 focus=centre_of_mass fov=120/360
+            !camera id=:mass_forward position=centre_of_mass focus=centre_of_mass+heading fov=90/360
+            !camera id=:mass_back position=centre_of_mass focus=centre_of_mass-heading fov=60/360
             for i in ..N
                 let velocity=$(:boid;i;:velocity)
-                    color=colortemp(hypot(velocity)*55)
+                    color=colortemp(hypot(velocity)*50)
                 !transform translate=$(:boid;i)
-                    !material color=0.5 metal=true roughness=0.3 emissive=color*200
+                    !material color=0.5 metal=true roughness=0.3 emissive=color*250
                         !sphere
                         !cone start=0 end=velocity/5
+                    if i == uniform(:boid)[beat//60]*N//1
+                        !camera id=:boidseye position=0 focus=velocity up=-centre_of_mass fov=90/360
                     if i < LIGHTS
                         !light position=0 color=color*(20M/LIGHTS)
-    !record filename=('day19.mp4' if RECORD and beat > 120) codec=:hevc crf=30 hidden=true
+    !record filename=('day19.mp4' if RECORD and beat > 60) codec=:hevc crf=25 hidden=true
         !reference id=:top
