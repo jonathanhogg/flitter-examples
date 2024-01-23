@@ -26,6 +26,8 @@
 --    because the output of a record node is always the input, so the cube would
 --    just be drawn over itself again
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day3.fl --lockstep --fps=30 --runtime=32 --define RECORD=1080
 

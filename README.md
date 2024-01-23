@@ -8,8 +8,13 @@ You can find **flitter** here:
 
 https://github.com/jonathanhogg/flitter
 
-All of the examples in this repo are under the Creative Commons
-[BY-SA-NC-4](https://creativecommons.org/licenses/by-nc-sa/4.0/) license. In
+## LICENSE
+
+Flitter Examples © 2024 by Jonathan Hogg are licensed under CC BY-NC-SA 4.0
+
+All of the examples in this repo are covered by the Creative Commons
+[BY-SA-NC 4.0 license](https://creativecommons.org/licenses/by-nc-sa/4.0/). In
 short, that means you can share and modify these examples, but you must give
-credit to the original author and may not use the code for commercial purposes.
-Please see the [LICENSE](/LICENSE) file for the specifics.
+credit to the original author, may not use the code for commercial purposes and
+must retain these restrictions on any derivations. Please see the
+[LICENSE](/LICENSE) file for the legal specifics.

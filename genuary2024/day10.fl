@@ -13,6 +13,8 @@
 -- filter is placed over the top of this (see separate code for the
 -- implementation of that).
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day10.fl --lockstep --fps=30 --runtime=30 --define 'RECORD=720'
 

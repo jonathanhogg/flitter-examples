@@ -5,6 +5,8 @@
 -- These 6 views are then combined into a texture that is wrapped around a
 -- rotating cube in a separate 3D scene.
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day22.fl --lockstep --runtime=60 --fps=60 --define 'RECORD=1080'
 

@@ -5,6 +5,8 @@
 -- fairly readable as it's quite simple. A 2D slice through 3D simplex noise is
 -- used to create the shifting landscape. This is calculated row at a time as
 -- this is faster than point at a time.
+--
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0--
 
 let ROWS=75 COLS=150
 !window size=1280;720

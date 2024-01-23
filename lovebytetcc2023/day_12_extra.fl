@@ -5,6 +5,8 @@
 -- an increasing rotation that creates the twist. Switching from translations
 -- to rotations create the signature hook shape. Adding an additional rotation
 -- based on beat creats a barber-pole effect.
+--
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0--
 
 !window size=1080
   !canvas3d rotate=beat/(20;40;60) translate=-150;-50;0

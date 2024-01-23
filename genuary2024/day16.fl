@@ -19,6 +19,8 @@
 -- objects, and playing with increasing the number of cone segments and using
 -- smooth shading produces lots of different interesting ribbed surfaces.
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day16.fl --lockstep --runtime=60 --fps=30 --define 'RECORD=1080'
 

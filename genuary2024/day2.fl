@@ -22,6 +22,8 @@
 -- `points` variable is set to `initial_points` if the first point state is
 -- null.
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day2.fl --lockstep --fps=60 --runtime=60 --define RECORD=1080
 

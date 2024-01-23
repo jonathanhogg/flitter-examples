@@ -14,6 +14,8 @@
 -- (which is as random as any other selection) are also lights to create some
 -- reflections on the surrounding particles.
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day19.fl --lockstep --runtime=120 --fps=30 --define 'RECORD=1080'
 

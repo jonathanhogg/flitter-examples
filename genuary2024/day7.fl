@@ -3,6 +3,8 @@
 -- This is a rough experiment in ragdoll physics. It doesn't work very well
 -- really, because the Flitter physics engine is very simplistic.
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day7.fl --lockstep --runtime=70 --define 'RECORD=1080'
 

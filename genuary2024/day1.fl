@@ -12,6 +12,8 @@
 -- ground plane. The fog is included mainly as a cheap way to colour the sky
 -- and soften the boundary between the ground and the sky.
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day1.fl --lockstep --fps=30 --runtime=60 --define RECORD=720
 

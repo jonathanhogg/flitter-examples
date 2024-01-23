@@ -8,6 +8,8 @@
 -- such a useful thing that maybe I ought to think about how I could make it as
 -- a primitive.
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day6.fl --lockstep --fps=30 --runtime=31 --define 'RECORD=1080'
 

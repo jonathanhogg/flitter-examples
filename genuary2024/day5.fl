@@ -22,6 +22,8 @@
 -- *exactly* the same output. I'm considering that enough of a generative
 -- system to qualify as "after Vera Molnár".
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day5.fl --lockstep --fps=30 --runtime=30 --define 'RECORD=960;720'
 

@@ -4,6 +4,8 @@
 -- textiles (primarily because that was all women were allowed to do at the
 -- school).
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day11.fl --lockstep --runtime=70 --fps=60 --define 'RECORD=1080'
 

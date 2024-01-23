@@ -5,6 +5,8 @@
 -- colour of gold is used. A torus is easy to create in Flitter with rotation
 -- transforms. The original code had balls of light whizzing around inside the
 -- torus, but they are omitted here to save space.
+--
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0--
 
 let b=beat
 !window size=1080

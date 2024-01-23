@@ -5,6 +5,8 @@
 -- MODE 7, which uses a chip-based character generator (same one as the old
 -- Teletext service) not the bitmap font.
 --
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+--
 -- Record a video with:
 -- flitter day9.fl --lockstep --runtime=15 --fps=60 --define 'RECORD=1080'
 
