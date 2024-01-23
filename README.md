@@ -1,20 +1,25 @@
 # Flitter Examples
 
-This repo contains a wider variety of **flitter** examples than makes sense to
-include in the main language/engine repo. They are loosely organised into
-folders by theme.
+This repo contains a wide variety of mini visual artworks written in the
+**Flitter** visuals language. They are organised into folders by theme.
 
-You can find **flitter** here:
+You can find the **Flitter** language here:
 
 https://github.com/jonathanhogg/flitter
 
 ## LICENSE
 
-Flitter Examples © 2024 by Jonathan Hogg are licensed under CC BY-NC-SA 4.0
+**Copyright © 2024 Jonathan Hogg**
 
-All of the examples in this repo are covered by the Creative Commons
-[BY-SA-NC 4.0 license](https://creativecommons.org/licenses/by-nc-sa/4.0/). In
-short, that means you can share and modify these examples, but you must give
-credit to the original author, may not use the code for commercial purposes and
-must retain these restrictions on any derivations. Please see the
-[LICENSE](/LICENSE) file for the legal specifics.
+All of these works are licensed under the [Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License][cc].
+
+![CC BY-NC-SA 4.0](https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png)
+
+In short, you're welcome to use, share and remix these artworks provided
+that: you do not do so commercially; you acknowledge the original artist; you
+mark clearly any derivative version and you apply the same license to any such
+work. Note that this summary is not a substitute for the [full license text][cl].
+
+[cc]: https://creativecommons.org/licenses/by-nc-sa/4.0/
+[cl]: https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
