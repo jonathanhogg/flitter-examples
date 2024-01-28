@@ -18,90 +18,97 @@ import bloom_filter from '../common/filters.fl'
 
 let SIZE=RECORD or 1080
     NLEGS=6
+    NLIGHTS=24
     t=beat
 
 
-func saucer(_, segments=128)
+func saucer(_, segments=64)
     !intersect
         !sphere segments=segments size=1 position=0;0;-0.9
         !sphere segments=segments size=1.5 position=0;0;1.4
 
-func leg(_)
-    !difference
-        !union
-            !box size=0.2;0.01;0.04 position=0.1;0;0
-            !cylinder size=0.02;0.02;0.01 position=0.2;0;0 rotation=0.25;0;0
-            !transform translate=0.2;0;0 rotate_y=0.08
-                !difference
-                    !box size=0.1;0.01;0.04 position=0.05;0;0
-                    !transform rotate_y=0.01
-                        !box size=0.2;0.01;0.04 position=0.05;0;0.04
-                !cylinder size=0.017;0.017;0.01 position=0.1;0;-0.003 rotation=0.25;0;0
-                !transform translate=0.1;0;-0.003 rotate_y=0.03
-                    !difference
-                        !box size=0.1;0.01;0.032 position=0.05;0;0
-                        !transform rotate_y=0.01
-                            !box size=0.15;0.01;0.032 position=0.05;0;0.032
-                    !cylinder size=0.013;0.013;0.01 position=0.1;0;-0.003 rotation=0.25;0;0
-                    !transform translate=0.1;0;0 rotate_y=0.1
-                        !difference
-                            !box size=0.1;0.01;0.02 position=0.05;0;0
-                            !transform rotate_y=0.02
-                                !box size=0.15;0.01;0.02 position=0.05;0;0.02
-                        !cylinder size=0.005;0.005;0.01 position=0.1;0;-0.006 rotation=0.25;0;0
-        for j in ..4
-            !cylinder size=0.015;0.015;0.02 rotation=0.25;0;0 position=0.2*(j+1)/4.75;0;0
-        !transform translate=0.2;0;0 rotate_y=0.085
-            for j in ..3
-                !cylinder size=(0.013;0.013)-0.001*j;0.02 rotation=0.25;0;0 position=0.11*(j+0.25)/3;0;0
-            !transform translate=0.1;0;0 rotate_y=0.03
-                for j in ..3
-                    !cylinder size=(0.011;0.011)-0.001*j;0.02 rotation=0.25;0;0 position=0.1*(j+0.5)/3;0;0
+func spar(_, position=0, size=1, end=1, holes=4)
+    let length;width;height=size * (1;1;1)
+    !transform translate=position
+        !difference
+            !union
+                !cylinder size=height/2;height/2;width position=-length/2;0;0 rotation=0.25;0;0
+                !slice position=-length/2;0;-height/2 normal=(height-end)/2;0;-length
+                    !slice position=-length/2;0;height/2 normal=(height-end)/2;0;length
+                        !box size=length;width;max(height, end)
+                !cylinder size=end/2;end/2;width position=length/2;0;0 rotation=0.25;0;0
+            for i in ..holes
+                let k=i/(holes-1)
+                    p=length*(k-0.5)
+                    r=(height+k*(end-height))/3
+                !cylinder size=r;r;width position=p;0;0 rotation=0.25;0;0
 
-func laser(_, power=0, angle=0.125)
+func leg(_, down=1, curvature=0.013)
+    !transform translate=0.05;0;0 rotate_y=0.01*down-curvature
+        @spar position=0.056;0;0 size=0.12;0.01;0.04 end=0.04
+        !transform translate=0.12;0;0 rotate_y=0.07*down-curvature
+            @spar position=0.05;0;0 size=0.1;0.01;0.04 end=0.03
+            !transform translate=0.1;0;0 rotate_y=0.07*down-curvature
+                @spar position=0.05;0;0 size=0.1;0.01;0.03 end=0.02 holes=5
+                !transform translate=0.1;0;0 rotate_y=0.1*down-curvature
+                    @spar position=0.05;0;0 size=0.1;0.01;0.02 end=0.01 holes=6
+
+func laser(_, power=0, rotation=0, elevation=0.125)
     !cylinder start=0 end=0;0;-0.05 radius=0.005
-    !transform translate=0;0;-0.05 rotate_x=angle
-        !sphere position=0 size=0.008
-        !cylinder start=0 end=0;0;-0.1 radius=0.005
-        !cone position=0;0;-0.1 size=0.02
-        if power
-            !material color=0 metal=false roughness=1
-                !cylinder start=0;0;-0.1 end=0;0;-2000 radius=0.002 emissive=0;linear(power);0
-                !cylinder start=0;0;-0.1 end=0;0;-2000 radius=0.005 emissive=power;0;0 transparency=0.5
+    !transform translate=0;0;-0.05 rotate_z=rotation rotate_x=elevation
+        !sphere size=0.01
+        !transform translate=0;0;-0.1
+            !group
+                !union
+                    !cylinder start=0 end=0;0;0.1 radius=0.005
+                    !difference
+                        !cone size=0.03
+                        !cone size=0.03 position=0;0;-0.01
+                if power
+                    !light position=0;0;-0.01 color=5*power*(1;0.25;0)
+                    !material color=0 metal=false roughness=1
+                        !cylinder start=0 end=0;0;-2000 radius=0.002 emissive=0;linear(power);0
+                        !cylinder start=0 end=0;0;-2000 radius=0.005 emissive=power;0;0 transparency=0.5
 
 
 !window size=SIZE
-    @bloom_filter id=:top radius=hypot(SIZE)/80 exposure=-1
+    @bloom_filter id=:top radius=SIZE[0]/108 exposure=-1
         !canvas3d viewpoint=0;0;500 far=2000 fov=30/360 samples=4 fog_min=500 fog_max=2000
             !light color=0.25 direction=0;0;-1
             !light color=0.25 direction=0;-1;0
             !light color=0.25 direction=1;1;1
-            !transform rotate=-0.25+sin(t/15)*0.05;sin(t/10)*0.03;-beat/30
-                !transform scale=200 translate=0;0;0.05
-                    !material color=0.5 metal=true roughness=0.4
-                        !union smooth=0.06 minarea=1/1000
-                            !sphere segments=64 size=0.16;0.16;0.13 position=0;0;0.05
+            !transform rotate=-0.25+sin(t/15)*0.05;sin(t/10)*0.03;-beat/30 scale=200
+                !material color=0.5 metal=true roughness=0.4
+                    !union
+                        !sphere size=0.16;0.16;0.13 position=0;0;0.1
+                        !transform translate=0;0;0.05
                             !difference
                                 @saucer
                                 for i in ..4
-                                    !transform rotate_z=i/4 translate=0.5;0;0.05
-                                        !box size=0.6;0.005;0.1
-                            !transform scale=0.98
+                                    !transform rotate_z=i/4 translate=0.32;0;0.1
+                                        !box size=0.22;0.01;0.2
+                            !transform scale=0.97
                                 @saucer
-                        !transform translate=0;0;-0.12
+                        !transform translate=0;0;-0.07
                             !difference
                                 !sphere size=0.12;0.12;0.09 position=0;0;0.05
-                                !cylinder size=0.02;0.02;0.1
+                                !cylinder size=0.03;0.03;0.1
                                 for i in ..NLEGS
                                     !transform rotate_z=i/NLEGS
                                         !box size=0.2;0.03;0.05 position=0.1;0;0
-                            for i in ..NLEGS
-                                !transform rotate_z=i/NLEGS rotate_y=-0.01 translate=0.05;0;-0.006
-                                    @leg
+                    !transform translate=0;0;-0.07
+                        for i in ..NLEGS
+                            !transform rotate_z=i/NLEGS
+                                @leg down=quad(triangle(beat/10))
                         !material color=0 metal=false roughness=1
-                            !transform translate=0;0;-0.07
-                                !sphere size=0.08
-                        !transform translate=0;0;-0.15 rotate_z=-beat/10
-                            @laser power=0.5+4.5*impulse(beat*5) angle=0.1+sine(beat/5)*0.1
+                            !sphere size=0.08 position=0;0;0.05
+                    !transform translate=0;0;-0.1
+                        @laser rotation=-beat/10 elevation=0.1+sine(beat/5)*0.1 power=0.5+4.5*impulse(beat*5)
+                !material color=0 metal=false roughness=0.1
+                for i in ..NLIGHTS
+                    let b=impulse(beat+2*i/NLIGHTS)
+                    !transform rotate_z=i/NLIGHTS translate=0.44;0;0.018
+                        !sphere size=0.005 emissive=2*b
+                        !light position=0;0;-0.004 color=100*b
     !record filename=('day21.mp4' if RECORD) codec=:hevc crf=25 hidden=true
         !reference id=:top
