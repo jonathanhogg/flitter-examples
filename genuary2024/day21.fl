@@ -22,10 +22,10 @@ let SIZE=RECORD or 1080
     t=beat
 
 
-func saucer(_, segments=64)
+func saucer(_)
     !intersect
-        !sphere segments=segments size=1 position=0;0;-0.9
-        !sphere segments=segments size=1.5 position=0;0;1.4
+        !sphere size=1 position=0;0;-0.9
+        !sphere size=1.5 position=0;0;1.4
 
 func spar(_, position=0, size=1, end=1, holes=4)
     let length;width;height=size * (1;1;1)
@@ -33,8 +33,8 @@ func spar(_, position=0, size=1, end=1, holes=4)
         !difference
             !union
                 !cylinder size=height/2;height/2;width position=-length/2;0;0 rotation=0.25;0;0
-                !slice position=-length/2;0;-height/2 normal=(height-end)/2;0;-length
-                    !slice position=-length/2;0;height/2 normal=(height-end)/2;0;length
+                !slice origin=-length/2;0;-height/2 normal=(height-end)/2;0;-length
+                    !slice origin=-length/2;0;height/2 normal=(height-end)/2;0;length
                         !box size=length;width;max(height, end)
                 !cylinder size=end/2;end/2;width position=length/2;0;0 rotation=0.25;0;0
             for i in ..holes
