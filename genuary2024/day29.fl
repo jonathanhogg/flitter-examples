@@ -51,11 +51,11 @@ func blob_color(i)
 
 !window size=SIZE
     @bloom_filter id=:top radius=SIZE[0]/54
-        !canvas3d viewpoint=0;0;100 far=200 fov=80/360 fog_color=colortemp(1500) fog_max=200
+        !canvas3d viewpoint=0;0;100 far=200 fov=80/360 fog_color=colortemp(1500) fog_max=200 max_lights=NBLOBS+1
             !light color=colortemp(3000)*100k direction=0;1;0 position=0;-100;0
             for i in ..NBLOBS
                 !light position=$(:blob;i) color=blob_color(i)*blob_radii[i]**2/2
-            !material roughness=0.3 metal=true color=0.5
+            !material roughness=0.35 metal=true color=0.5
                 !group fragment=read('../glsl/sdf_shader.frag') \
                        NSPHERES=NBLOBS smoothing=10 max_iterations=100 normal_delta=0.1 epsilon=0.01 far=200 \
                        sphere_positions=($(:blob;i) for i in ..NBLOBS) \
