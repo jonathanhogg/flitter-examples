@@ -153,9 +153,10 @@ void main() {
     }
     vec3 emissive = trace.c;
     vec3 N = trace.n;
-    vec4 pos = pv_matrix * vec4(world_position - V*trace.d, 1);
-    gl_FragDepth = pos.z / pos.w;
     view_distance += trace.d;
+    vec3 world_pos = world_position - V*trace.d;
+    vec4 view_pos = pv_matrix * vec4(world_pos, 1);
+    gl_FragDepth = view_pos.z / view_pos.w;
     //
     // The rest of the material properties and lighting calculation is done
     // as per usual.
@@ -218,11 +219,11 @@ void main() {
             float attenuation = 1;
             float light_distance = 1;
             if (light_type == ${Point}) {
-                L = light_position - world_position;
+                L = light_position - world_pos; // was world_position
                 light_distance = length(L);
                 L /= light_distance;
             } else if (light_type == ${Spot}) {
-                L = light_position - world_position;
+                L = light_position - world_pos; // was world_position
                 light_distance = length(L);
                 L /= light_distance;
                 float spot_cosine = dot(L, -light_direction);
