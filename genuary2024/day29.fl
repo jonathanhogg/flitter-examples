@@ -7,9 +7,11 @@
 -- A simple physics system simulates a bunch of blobs with random radii,
 -- starting positions and starting temperatures. Blobs hotter than 1500°K rise
 -- and cooler blobs sink. Blobs gain or lose heat depending on whether they are
--- nearer to the bottom or top of the sphere. The blobs have opposing collision
--- and sticky forces that make them tend to loosely clump together, some slight
--- Brownian motion randomness and a heavy drag complete the simulation.
+-- nearer to the bottom or top of the sphere. The blobs have an adhesion force
+-- that make them tend to loosely clump together, some slight  Brownian motion
+-- randomness, buoyancy and drag complete the simulation. The buoyancy is
+-- controller by keeping the mass of the particles the same and varyng the
+-- radius according to the temperature so that they change density.
 --
 -- A group is constructed containing a single sphere that is rendered with a
 -- custom shader. The custom shader takes the positions, radii and colours of
