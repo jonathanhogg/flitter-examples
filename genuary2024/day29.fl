@@ -27,7 +27,8 @@
 
 import bloom_filter from '../common/filters.fl'
 
-let SIZE=RECORD or 1080
+let SIZE=RECORD*(1;1) or (1080;1080)
+    FOV=60/360 if RECORD[1]>RECORD[0] else 70/360
     NBLOBS=100
     TAU=6.283185307179586
     NEUTRAL_DENSITY=1m
@@ -51,7 +52,7 @@ let t=$(:blob;:clock)
     temperature_update=counter(:temperature, t, rate_of_temperature_change)
 
 func blob_color(i)
-    colortemp(blob_temperature[i])*200
+    colortemp(blob_temperature[i])*250
 
 !physics dimensions=3 state=:blob resolution=1/30
     !adhesion strength=0.5
@@ -65,8 +66,8 @@ func blob_color(i)
 
 !window size=SIZE
     @bloom_filter id=:top radius=SIZE[0]/54
-        !canvas3d camera_id=:cam far=200 fov=70/360 fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_max=200 max_lights=NBLOBS+1
-            !transform rotate_y=beat/60
+        !canvas3d camera_id=:cam far=200 fov=FOV fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_max=200 max_lights=NBLOBS+1
+            !transform rotate_y=t/60
                 !camera id=:cam viewpoint=0;0;100
             !light color=colortemp(LAMP_TEMPERATURE)*100k direction=0;1;0 position=0;-100;0
             for i in ..NBLOBS
