@@ -72,11 +72,10 @@ uniform float epsilon = 1;
 // Basic ray-marching SDF implementation:
 
 const float INFINITY = 1.0 / 0.0;
-const vec3 CONSTANTS = vec3(1.0, 0.0, -1.0);
 
-vec3 NORMAL_DX = vec3(normal_delta, 0.0, 0.0);
-vec3 NORMAL_DY = vec3(0.0, normal_delta, 0.0);
-vec3 NORMAL_DZ = vec3(0.0, 0.0, normal_delta);
+vec3 NORMAL_DX = vec3(normal_delta, 0, 0);
+vec3 NORMAL_DY = vec3(0, normal_delta, 0);
+vec3 NORMAL_DZ = vec3(0, 0, normal_delta);
 
 struct Trace {
     float d;
@@ -89,8 +88,8 @@ vec4 union_sdf(vec4 d1, vec4 d2) {
 }
 
 vec4 smooth_union_sdf(vec4 d1, vec4 d2, float k) {
-    float h = clamp(0.5 + 0.5 * (d2.a - d1.a)/k, 0.0, 1.0), d = k * h*(1.0-h);
-    return mix(d2, d1, h) + CONSTANTS.yyyz*d;
+    float h = clamp(0.5 + 0.5 * (d2.a - d1.a)/k, 0, 1), d = k * h*(1-h);
+    return mix(d2, d1, h) - vec4(0, 0, 0, d);
 }
 
 vec4 sphere_sdf(vec3 point, vec3 origin, float radius, vec3 color) {
@@ -98,10 +97,10 @@ vec4 sphere_sdf(vec3 point, vec3 origin, float radius, vec3 color) {
 }
 
 vec4 scene_sdf(vec3 point) {
-    vec4 d = vec4(vec3(0.0), INFINITY);
-    for (int i=0; i < NSPHERES; i++) {
+    vec4 d = sphere_sdf(point, sphere_positions[0], sphere_radii[0], sphere_colors[0]);
+    for (int i=1; i < NSPHERES; i++) {
         vec4 sd = sphere_sdf(point, sphere_positions[i], sphere_radii[i], sphere_colors[i]);
-        d = smoothing > 0.0 ? smooth_union_sdf(d, sd, smoothing) : union_sdf(d, sd);
+        d = smoothing > 0 ? smooth_union_sdf(d, sd, smoothing) : union_sdf(d, sd);
     }
     return d;
 }
