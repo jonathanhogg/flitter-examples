@@ -23,7 +23,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day29.fl --lockstep --runtime=120 --define 'RECORD=1080'
+-- flitter day29.fl --lockstep --runtime=180 --define 'RECORD=1080'
 
 import bloom_filter from '../common/filters.fl'
 
@@ -36,26 +36,26 @@ let t=$(:blob;:clock)
 
 func blob_color(i)
     let temperature=blob_start_temp[i]+counter(:temp;i, t)
-    colortemp(temperature)*500
+    colortemp(temperature)*250
 
-!physics dimensions=3 state=:blob resolution=1/20
-    !collision strength=2
-    !sticky strength=1
+!physics dimensions=3 state=:blob resolution=1/30
+    !collision strength=20
+    !sticky strength=20
     !random strength=1
     !drag strength=25m
     !anchor id=:middle
     for i in ..NBLOBS
         let temperature=blob_start_temp[i]+counter(:temp;i, t, -5*$(:blob;i)[1]/blob_radii[i]**2)
         !particle id=i radius=blob_radii[i] mass=blob_radii[i]**3 position=normal(:pos;i)[..3]*10 force=0;(temperature-1500)/100;0
-        !distance from=:middle to=i max=50 strength=50
+        !distance from=:middle to=i max=50 strength=100
 
 !window size=SIZE
     @bloom_filter id=:top radius=SIZE[0]/54
-        !canvas3d viewpoint=0;0;100 far=200 fov=80/360 fog_color=colortemp(1500) fog_max=200 fog_curve=2
-            !light color=colortemp(3000)*100k direction=0;1;0 position=0;-100;0
-            !material roughness=0.35 metal=true color=0.5
+        !canvas3d viewpoint=0;0;100 far=200 fov=80/360 fog_color=colortemp(1500) fog_max=200
+            !light color=colortemp(3000)*200k direction=0;1;0 position=0;-100;0
+            !material roughness=0.4 metal=true color=0.5
                 !group fragment=read('../glsl/sdf_shader.frag') \
-                       NSPHERES=NBLOBS smoothing=10 max_iterations=50 normal_delta=0.1 epsilon=0.01 far=200 \
+                       NSPHERES=NBLOBS smoothing=10 max_iterations=100 normal_delta=0.1 epsilon=0.01 far=200 \
                        sphere_positions=($(:blob;i) for i in ..NBLOBS) \
                        sphere_colors=(blob_color(i) for i in ..NBLOBS) \
                        sphere_radii=blob_radii
