@@ -1,5 +1,12 @@
 
-// Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
+// This is mostly the standard lighting shader from Flitter, but with a simple
+// SDF sphere-rendering capability hacked in. It will render the spheres
+// specified by the `sphere_positions`, `sphere_radii` and `sphere_colors`
+// uniforms. `smoothing` controls the use of smooth unioning of the spheres.
+// `far` controls the maximum ray distance.
+//
+// Copyright 2024 by Jonathan Hogg and licensed under the original Flitter
+// BSD 2-clause license https://github.com/jonathanhogg/flitter/blob/main/LICENSE
 
 #version 330
 
@@ -31,6 +38,10 @@ uniform float fog_min;
 uniform vec3 fog_color;
 uniform float fog_curve;
 
+// We need the PV matrix that is normally only used in the vertex shader
+// to do per-fragment depth calculations:
+uniform mat4 pv_matrix;
+
 uniform bool use_albedo_texture;
 uniform bool use_metal_texture;
 uniform bool use_roughness_texture;
@@ -45,25 +56,23 @@ uniform sampler2D occlusion_texture;
 uniform sampler2D emissive_texture;
 uniform sampler2D transparency_texture;
 
+
+// These should be provided as attributes to the render `!group`:
 const int NSPHERES = ${NSPHERES};
 uniform vec3 sphere_positions[NSPHERES];
 uniform vec3 sphere_colors[NSPHERES];
 uniform float sphere_radii[NSPHERES];
-uniform float smoothing;
 uniform float far;
-
-uniform mat4 pv_matrix;
-
-const float INFINITY = 1.0 / 0.0;
-const float TWO_PI = 6.283185307179586;
-const vec3 CONSTANTS = vec3(1.0, 0.0, -1.0);
-
-in vec2 coord;
-out vec4 color;
-
+uniform float smoothing = 0;
 uniform int max_iterations = 250;
 uniform float normal_delta = 1;
 uniform float epsilon = 1;
+
+
+// Basic ray-marching SDF implementation:
+
+const float INFINITY = 1.0 / 0.0;
+const vec3 CONSTANTS = vec3(1.0, 0.0, -1.0);
 
 vec3 NORMAL_DX = vec3(normal_delta, 0.0, 0.0);
 vec3 NORMAL_DY = vec3(0.0, normal_delta, 0.0);
@@ -131,6 +140,13 @@ void main() {
         V /= view_distance;
     }
 
+    // This is the additional SDF bit.
+    //
+    // We ray-march through the fragment in the view direction to get the
+    // distance, emissive colour, and normal for this fragment. The fragment
+    // depth is overridden to match the actual ray intersection point instead
+    // of the surface of the render volume.
+    //
     Trace trace = ray_march(world_position, -V, far-view_distance);
     if (trace.d < 0 || isinf(trace.d)) {
         discard;
@@ -140,6 +156,9 @@ void main() {
     vec4 pos = pv_matrix * vec4(world_position - V*trace.d, 1);
     gl_FragDepth = pos.z / pos.w;
     view_distance += trace.d;
+    //
+    // The rest of the material properties and lighting calculation is done
+    // as per usual.
 
     float fog_alpha = (fog_max > fog_min) && (fog_curve > 0) ? pow(clamp((view_distance - fog_min) / (fog_max - fog_min), 0, 1), 1/fog_curve) : 0;
     if (fog_alpha == 1) {
