@@ -27,59 +27,63 @@
 -- Record a video with:
 -- flitter day29.fl --lockstep --runtime=180 --define 'RECORD=1080'
 
+%pragma tempo 60
+
 import bloom_filter from '../common/filters.fl'
 
 let SIZE=RECORD*(1;1) or (1080;1080)
     FOV=60/360 if RECORD[1]>RECORD[0] else 70/360
     NBLOBS=100
-    TAU=6.283185307179586
     NEUTRAL_DENSITY=1m
     NEUTRAL_TEMPERATURE=1500
     THERMAL_CONDUCTIVITY=0.2m
     LAMP_TEMPERATURE=3000
     THERMAL_GRADIENT=-2000
     THERMAL_CURVE=2
+    SMOOTHING=10
+    R=80
 
 let t=$(:blob;:clock)
-    blob_start_temp=NEUTRAL_TEMPERATURE+250*normal(:radius)[..NBLOBS]
-    blob_mass=0.1+uniform(:mass)[..NBLOBS]**2*1.4
+    blob_start_temp=NEUTRAL_TEMPERATURE+100*normal(:radius)[..NBLOBS]
+    blob_mass=0.05+uniform(:mass)[..NBLOBS]**3*0.95
     blob_height=$(:blob;i)[1] for i in ..NBLOBS
-    lamp_radiant_temperature=LAMP_TEMPERATURE+(1-((50-blob_height)/100)**THERMAL_CURVE)*THERMAL_GRADIENT
+    lamp_radiant_temperature=LAMP_TEMPERATURE+(1-((R-blob_height)/(R*2))**THERMAL_CURVE)*THERMAL_GRADIENT
     blob_temperature=blob_start_temp+counter(:temperature, t)
     blob_volume=blob_mass/NEUTRAL_DENSITY*blob_temperature/NEUTRAL_TEMPERATURE
-    blob_radius=(blob_volume/(2/3*TAU))**(1/3)
-    blob_area=2*TAU*blob_radius**2
+    blob_radius=blob_volume**(1/3)
+    blob_area=blob_radius**2
     temp=map(0.9, blob_temperature, NEUTRAL_TEMPERATURE)
     rate_of_temperature_change=THERMAL_CONDUCTIVITY*(lamp_radiant_temperature-temp)/blob_mass*blob_area
     temperature_update=counter(:temperature, t, rate_of_temperature_change)
 
 func blob_color(i)
-    colortemp(blob_temperature[i])*250
+    colortemp(blob_temperature[i])*500
 
 !physics dimensions=3 state=:blob resolution=1/30
     !adhesion strength=0.5
-    !buoyancy gravity=0;-10;0 density=NEUTRAL_DENSITY
-    !random strength=1
-    !drag strength=10m
+    !buoyancy gravity=0;-100;0 density=NEUTRAL_DENSITY
+    !random strength=0.5
+    !drag strength=2m
     !anchor id=:middle
     for i in ..NBLOBS
-        !particle id=i radius=blob_radius[i] mass=blob_mass[i] position=normal(:pos;i)[..3]*10
-        !distance from=:middle to=i max=50 strength=10
+        !particle id=i radius=blob_radius[i] mass=blob_mass[i] position=normal(:pos;i)[..3]*R/5
+        !distance from=:middle to=i max=R strength=10
 
 !window size=SIZE
-    @bloom_filter id=:top radius=SIZE[0]/54
-        !canvas3d camera_id=:cam far=200 fov=FOV fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_max=200 max_lights=NBLOBS+1
-            !transform rotate_y=t/60
-                !camera id=:cam viewpoint=0;0;100
-            !light color=colortemp(LAMP_TEMPERATURE)*100k direction=0;1;0 position=0;-100;0
-            for i in ..NBLOBS
-                !light position=$(:blob;i) color=blob_color(i)*blob_area[i]/20
-            !material roughness=0.35 metal=true color=0.5
+    @bloom_filter id=:top blursize=SIZE/2 radius=SIZE[0]/108
+        !canvas3d camera_id=:cam far=R*3 fov=FOV fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_min=50 fog_max=R*3 max_lights=NBLOBS+1
+            !transform rotate_y=beat/60
+                !camera id=:cam viewpoint=0;0;R*2
+            !light color=colortemp(LAMP_TEMPERATURE)*100*R**2 direction=0;1;0 position=0;-R*2;0
+            !material roughness=0.4 metal=true color=0.5
                 !group fragment=read('../glsl/sdf_shader.frag') \
-                       NSPHERES=NBLOBS smoothing=6 max_iterations=100 normal_delta=0.1 epsilon=0.01 far=200 \
+                       NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=100 normal_delta=0.1 epsilon=0.01 far=R*3 \
                        sphere_positions=($(:blob;i) for i in ..NBLOBS) \
                        sphere_colors=(blob_color(i) for i in ..NBLOBS) \
                        sphere_radii=blob_radius
-                    !sphere size=70
+                    for i in ..NBLOBS
+                        !transform translate=$(:blob;i)
+                            !sphere size=blob_radius[i]+SMOOTHING/2
+                            !light position=0 color=blob_color(i)*blob_area[i]
     !record filename=('day29.mp4' if RECORD and t > 60) codec=:hevc crf=25 hidden=true
         !reference id=:top

@@ -38,10 +38,6 @@ uniform float fog_min;
 uniform vec3 fog_color;
 uniform float fog_curve;
 
-// We need the PV matrix that is normally only used in the vertex shader
-// to do per-fragment depth calculations:
-uniform mat4 pv_matrix;
-
 uniform bool use_albedo_texture;
 uniform bool use_metal_texture;
 uniform bool use_roughness_texture;
@@ -57,25 +53,25 @@ uniform sampler2D emissive_texture;
 uniform sampler2D transparency_texture;
 
 
-// These should be provided as attributes to the render `!group`:
+// These should be provided as attributes to the render `!group`. Note that
+// these values can be compiled into the code as constants if they are unlikely
+// to change or passed in as uniforms otherwise.
+//
 const int NSPHERES = ${NSPHERES};
+const int far = ${far};
+const float smoothing = ${smoothing};
+const int max_iterations = ${max_iterations};
+const float normal_delta = ${normal_delta};
+const float epsilon = ${epsilon};
 uniform vec3 sphere_positions[NSPHERES];
 uniform vec3 sphere_colors[NSPHERES];
 uniform float sphere_radii[NSPHERES];
-uniform float far;
-uniform float smoothing = 0;
-uniform int max_iterations = 250;
-uniform float normal_delta = 1;
-uniform float epsilon = 1;
 
 
 // Basic ray-marching SDF implementation:
 
 const float INFINITY = 1.0 / 0.0;
-
-vec3 NORMAL_DX = vec3(normal_delta, 0, 0);
-vec3 NORMAL_DY = vec3(0, normal_delta, 0);
-vec3 NORMAL_DZ = vec3(0, 0, normal_delta);
+vec2 NORMAL = vec2(normal_delta, 0);
 
 struct Trace {
     float d;
@@ -83,47 +79,80 @@ struct Trace {
     vec3 n;
 };
 
-vec4 union_sdf(vec4 d1, vec4 d2) {
-    return d1.a <= d2.a ? d1 : d2;
+// We have a set of signed distance functions that do only distance
+// calculations...
+//
+float union_sdf(float d1, float d2) {
+    return min(d1, d2);
 }
 
-vec4 smooth_union_sdf(vec4 d1, vec4 d2, float k) {
-    float h = clamp(0.5 + 0.5 * (d2.a - d1.a)/k, 0, 1), d = k * h*(1-h);
-    return mix(d2, d1, h) - vec4(0, 0, 0, d);
+float smooth_union_sdf(float d1, float d2, float k) {
+    float h = clamp(0.5 + 0.5 * (d2 - d1)/k, 0, 1), d = k * h*(1-h);
+    return mix(d2, d1, h) - d;
 }
 
-vec4 sphere_sdf(vec3 point, vec3 origin, float radius, vec3 color) {
-    return vec4(color, length(point - origin) - radius);
+float sphere_sdf(vec3 point, vec3 origin, float radius) {
+    return length(point - origin) - radius;
 }
 
-vec4 scene_sdf(vec3 point) {
-    vec4 d = sphere_sdf(point, sphere_positions[0], sphere_radii[0], sphere_colors[0]);
+float scene_sdf(vec3 point) {
+    float d = sphere_sdf(point, sphere_positions[0], sphere_radii[0]);
     for (int i=1; i < NSPHERES; i++) {
-        vec4 sd = sphere_sdf(point, sphere_positions[i], sphere_radii[i], sphere_colors[i]);
+        float sd = sphere_sdf(point, sphere_positions[i], sphere_radii[i]);
         d = smoothing > 0 ? smooth_union_sdf(d, sd, smoothing) : union_sdf(d, sd);
     }
     return d;
 }
 
+// ...and a set that also calculate the color.
+//
+vec4 union_sdf_rgb(vec4 d1, vec4 d2) {
+    return d1.a < d2.a ? d1 : d2;
+}
+
+vec4 smooth_union_sdf_rgb(vec4 d1, vec4 d2, float k) {
+    float h = clamp(0.5 + 0.5 * (d2.a - d1.a)/k, 0, 1), d = k * h*(1-h);
+    return mix(d2, d1, h) - vec4(0, 0, 0, d);
+}
+
+vec4 sphere_sdf_rgb(vec3 point, vec3 origin, float radius, vec3 color) {
+    return vec4(color, length(point - origin) - radius);
+}
+
+vec4 scene_sdf_rgb(vec3 point) {
+    vec4 d = sphere_sdf_rgb(point, sphere_positions[0], sphere_radii[0], sphere_colors[0]);
+    for (int i=1; i < NSPHERES; i++) {
+        vec4 sd = sphere_sdf_rgb(point, sphere_positions[i], sphere_radii[i], sphere_colors[i]);
+        d = smoothing > 0 ? smooth_union_sdf_rgb(d, sd, smoothing) : union_sdf_rgb(d, sd);
+    }
+    return d;
+}
+
+// Our ray marcher does standard spherical marching using the distance-only
+// functions first and then does one more iteration with the color functions
+// and 6 more iterations with the distance functions to calculate a surface
+// normal approximation.
+//
 Trace ray_march(vec3 origin, vec3 direction, float max_distance) {
-    vec4 dist;
+    float delta;
     vec3 p;
     float d = 0;
-    for (int i = 0; i < max_iterations; i++) {
+    for (int i = 0; i < max_iterations-1; i++) {
         p = origin + d * direction;
-        dist = scene_sdf(p);
-        float delta = dist.a;
-        if (abs(delta) < epsilon) {
-            break;
-        }
+        delta = scene_sdf(p);
         d += delta;
         if (d > max_distance) {
             return Trace(INFINITY, vec3(0), vec3(0));
         }
+        if (abs(delta) < epsilon) {
+            break;
+        }
     }
-    vec3 d1 = vec3(scene_sdf(p + NORMAL_DX).a, scene_sdf(p + NORMAL_DY).a, scene_sdf(p + NORMAL_DZ).a),
-         d2 = vec3(scene_sdf(p - NORMAL_DX).a, scene_sdf(p - NORMAL_DY).a, scene_sdf(p - NORMAL_DZ).a);
-    return Trace(d, dist.rgb, normalize(d1 - d2));
+    p = origin + d * direction;
+    vec4 rgbd = scene_sdf_rgb(p);
+    vec3 d1 = vec3(scene_sdf(p + NORMAL.xyy), scene_sdf(p + NORMAL.yxy), scene_sdf(p + NORMAL.yyx)),
+         d2 = vec3(scene_sdf(p - NORMAL.xyy), scene_sdf(p - NORMAL.yxy), scene_sdf(p - NORMAL.yyx));
+    return Trace(d, rgbd.rgb, normalize(d1 - d2));
 }
 
 
@@ -141,28 +170,32 @@ void main() {
 
     // This is the additional SDF bit.
     //
-    // We ray-march through the fragment in the view direction to get the
-    // distance, emissive colour, and normal for this fragment. The fragment
-    // depth is overridden to match the actual ray intersection point instead
-    // of the surface of the render volume.
+    // We ray-march backwards from the fragment in the view direction to find
+    // an intersection with the SDF scene. If there is no hit then we exit
+    // immediately with transparent as the fragment colour. Otherwise we use
+    // the normal lighting calculation with the world position, normal and
+    // emissive colour derived from the SDF functions. Note that we are still
+    // colouring the surface fragment of the render triangular mesh and using
+    // its Z for the depth buffer. Effectively we treat the rendered volumes
+    // as pocket universes that contain the SDF scene.
     //
     Trace trace = ray_march(world_position, -V, far-view_distance);
-    if (trace.d < 0 || isinf(trace.d)) {
-        discard;
+    if (isinf(trace.d)) {
+        fragment_color = vec4(0);
+        return;
     }
     vec3 emissive = trace.c;
     vec3 N = trace.n;
     view_distance += trace.d;
     vec3 world_pos = world_position - V*trace.d;
-    vec4 view_pos = pv_matrix * vec4(world_pos, 1);
-    gl_FragDepth = view_pos.z / view_pos.w;
     //
     // The rest of the material properties and lighting calculation is done
     // as per usual.
 
     float fog_alpha = (fog_max > fog_min) && (fog_curve > 0) ? pow(clamp((view_distance - fog_min) / (fog_max - fog_min), 0, 1), 1/fog_curve) : 0;
     if (fog_alpha == 1) {
-        discard;
+        fragment_color = vec4(0);
+        return;
     }
     vec3 albedo = fragment_albedo;
     if (use_albedo_texture) {
