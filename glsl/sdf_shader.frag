@@ -1,9 +1,9 @@
 
 // This is mostly the standard lighting shader from Flitter, but with a simple
-// SDF sphere-rendering capability hacked in. It will render the spheres
-// specified by the `sphere_positions`, `sphere_radii` and `sphere_colors`
-// uniforms. `smoothing` controls the use of smooth unioning of the spheres.
-// `far` controls the maximum ray distance.
+// SDF sphere-rendering capability hacked in and texture-mapping support
+// removed. It will render the spheres specified by the `sphere_positions`,
+// `sphere_radii` and `sphere_colors` uniforms. `smoothing` controls the use of
+// smooth unioning of the spheres. `far` controls the maximum ray distance.
 //
 // Copyright 2024 by Jonathan Hogg and licensed under the original Flitter
 // BSD 2-clause license https://github.com/jonathanhogg/flitter/blob/main/LICENSE
@@ -16,13 +16,9 @@ in vec3 world_position;
 in vec3 world_normal;
 in vec2 texture_uv;
 
-flat in vec3 fragment_albedo;
-flat in float fragment_transparency;
+flat in vec4 fragment_albedo;
 flat in vec3 fragment_emissive;
-flat in float fragment_ior;
-flat in float fragment_metal;
-flat in float fragment_roughness;
-flat in float fragment_occlusion;
+flat in vec4 fragment_properties;
 
 out vec4 fragment_color;
 
@@ -38,21 +34,6 @@ uniform float fog_min;
 uniform vec3 fog_color;
 uniform float fog_curve;
 
-uniform bool use_albedo_texture;
-uniform bool use_metal_texture;
-uniform bool use_roughness_texture;
-uniform bool use_occlusion_texture;
-uniform bool use_emissive_texture;
-uniform bool use_transparency_texture;
-
-uniform sampler2D albedo_texture;
-uniform sampler2D metal_texture;
-uniform sampler2D roughness_texture;
-uniform sampler2D occlusion_texture;
-uniform sampler2D emissive_texture;
-uniform sampler2D transparency_texture;
-
-
 // These should be provided as attributes to the render `!group`. Note that
 // these values can be compiled into the code as constants if they are unlikely
 // to change or passed in as uniforms otherwise.
@@ -67,7 +48,6 @@ uniform vec3 sphere_positions[NSPHERES];
 uniform vec3 sphere_colors[NSPHERES];
 uniform float sphere_radii[NSPHERES];
 
-
 // Basic ray-marching SDF implementation:
 
 const float INFINITY = 1.0 / 0.0;
@@ -79,77 +59,62 @@ struct Trace {
     vec3 n;
 };
 
-// We have a set of signed distance functions that do only distance
-// calculations...
+// We have a signed distance function that does only distance calculations...
 //
-float union_sdf(float d1, float d2) {
-    return min(d1, d2);
-}
-
-float smooth_union_sdf(float d1, float d2, float k) {
-    float h = clamp(0.5 + 0.5 * (d2 - d1)/k, 0, 1), d = k * h*(1-h);
-    return mix(d2, d1, h) - d;
-}
-
-float sphere_sdf(vec3 point, vec3 origin, float radius) {
-    return length(point - origin) - radius;
-}
-
 float scene_sdf(vec3 point) {
-    float d = sphere_sdf(point, sphere_positions[0], sphere_radii[0]);
-    for (int i=1; i < NSPHERES; i++) {
-        float sd = sphere_sdf(point, sphere_positions[i], sphere_radii[i]);
-        d = smoothing > 0 ? smooth_union_sdf(d, sd, smoothing) : union_sdf(d, sd);
+    float d = length(point - sphere_positions[0]) - sphere_radii[0];
+    for (int i = 1; i < NSPHERES; i++) {
+        float sd = length(point - sphere_positions[i]) - sphere_radii[i];
+        if (smoothing > 0) {
+            float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0, 1);
+            d = mix(sd, d, h) - smoothing*h*(1-h);
+        } else if (sd < d) {
+            d = sd;
+        }
     }
     return d;
 }
 
-// ...and a set that also calculate the color.
+// ...and one that also calculates the color.
 //
-vec4 union_sdf_rgb(vec4 d1, vec4 d2) {
-    return d1.a < d2.a ? d1 : d2;
-}
-
-vec4 smooth_union_sdf_rgb(vec4 d1, vec4 d2, float k) {
-    float h = clamp(0.5 + 0.5 * (d2.a - d1.a)/k, 0, 1), d = k * h*(1-h);
-    return mix(d2, d1, h) - vec4(0, 0, 0, d);
-}
-
-vec4 sphere_sdf_rgb(vec3 point, vec3 origin, float radius, vec3 color) {
-    return vec4(color, length(point - origin) - radius);
-}
-
 vec4 scene_sdf_rgb(vec3 point) {
-    vec4 d = sphere_sdf_rgb(point, sphere_positions[0], sphere_radii[0], sphere_colors[0]);
-    for (int i=1; i < NSPHERES; i++) {
-        vec4 sd = sphere_sdf_rgb(point, sphere_positions[i], sphere_radii[i], sphere_colors[i]);
-        d = smoothing > 0 ? smooth_union_sdf_rgb(d, sd, smoothing) : union_sdf_rgb(d, sd);
+    float d = length(point - sphere_positions[0]) - sphere_radii[0];
+    vec3 rgb = sphere_colors[0];
+    for (int i = 1; i < NSPHERES; i++) {
+        float sd = length(point - sphere_positions[i]) - sphere_radii[i];
+        if (smoothing > 0) {
+            float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0, 1);
+            d = mix(sd, d, h) - smoothing*h*(1-h);
+            rgb = mix(sphere_colors[i], rgb, h);
+        } else if (sd < d) {
+            d = sd;
+            rgb = sphere_colors[i];
+        }
     }
-    return d;
+    return vec4(rgb, d);
 }
 
 // Our ray marcher does standard spherical marching using the distance-only
-// functions first and then does one more iteration with the color functions
-// and 6 more iterations with the distance functions to calculate a surface
-// normal approximation.
+// function first and then does one more iteration with the color function
+// and 6 more calls to the distance function to calculate a surface normal.
 //
 Trace ray_march(vec3 origin, vec3 direction, float max_distance) {
-    float delta;
-    vec3 p;
+    vec3 p = origin;
     float d = 0;
-    for (int i = 0; i < max_iterations-1; i++) {
-        p = origin + d * direction;
-        delta = scene_sdf(p);
+    for (int i = 1; i < max_iterations; i++) {
+        float delta = scene_sdf(p);
         d += delta;
         if (d > max_distance) {
             return Trace(INFINITY, vec3(0), vec3(0));
         }
+        p = origin + d * direction;
         if (abs(delta) < epsilon) {
             break;
         }
     }
-    p = origin + d * direction;
     vec4 rgbd = scene_sdf_rgb(p);
+    d += rgbd.a;
+    p = origin + d * direction;
     vec3 d1 = vec3(scene_sdf(p + NORMAL.xyy), scene_sdf(p + NORMAL.yxy), scene_sdf(p + NORMAL.yyx)),
          d2 = vec3(scene_sdf(p - NORMAL.xyy), scene_sdf(p - NORMAL.yxy), scene_sdf(p - NORMAL.yyx));
     return Trace(d, rgbd.rgb, normalize(d1 - d2));
@@ -197,44 +162,18 @@ void main() {
         fragment_color = vec4(0);
         return;
     }
-    vec3 albedo = fragment_albedo;
-    if (use_albedo_texture) {
-        vec4 texture_color = texture(albedo_texture, texture_uv);
-        albedo = albedo * (1 - clamp(texture_color.a, 0, 1)) + texture_color.rgb;
-    }
-    float metal = fragment_metal;
-    if (use_metal_texture) {
-        vec4 texture_color = texture(metal_texture, texture_uv);
-        float mono = clamp(dot(texture_color.rgb, greyscale), 0, 1);
-        metal = metal * (1 - clamp(texture_color.a, 0, 1)) + mono;
-    }
-    float roughness = fragment_roughness;
-    if (use_roughness_texture) {
-        vec4 texture_color = texture(roughness_texture, texture_uv);
-        float mono = clamp(dot(texture_color.rgb, greyscale), 0, 1);
-        roughness = roughness * (1 - clamp(texture_color.a, 0, 1)) + mono;
-    }
-    float occlusion = fragment_occlusion ;
-    if (use_occlusion_texture) {
-        vec4 texture_color = texture(occlusion_texture, texture_uv);
-        float mono = clamp(dot(texture_color.rgb, greyscale), 0, 1);
-        occlusion = occlusion * (1 - clamp(texture_color.a, 0, 1)) + mono;
-    }
+    vec3 albedo = fragment_albedo.rgb;
+    float transparency = fragment_albedo.a;
     // vec3 emissive = fragment_emissive;
-    if (use_emissive_texture) {
-        vec4 emissive_texture_color = texture(emissive_texture, texture_uv);
-        emissive = emissive * (1 - clamp(emissive_texture_color.a, 0, 1)) + emissive_texture_color.rgb;
-    }
-    float transparency = fragment_transparency;
-    if (use_transparency_texture) {
-        vec4 texture_color = texture(transparency_texture, texture_uv);
-        float mono = clamp(dot(texture_color.rgb, greyscale), 0, 1);
-        transparency = transparency * (1 - clamp(texture_color.a, 0, 1)) + mono;
-    }
+    float ior = fragment_properties.x;
+    float metal = fragment_properties.y;
+    float roughness = fragment_properties.z;
+    float occlusion = fragment_properties.z;
+
     vec3 diffuse_color = vec3(0);
     vec3 specular_color = emissive;
     // vec3 N = normalize(world_normal);
-    float rf0 = (fragment_ior - 1) / (fragment_ior + 1);
+    float rf0 = (ior - 1) / (ior + 1);
     vec3 F0 = mix(vec3(rf0*rf0), albedo, metal);
     for (int i = 0; i < nlights * 4; i += 4) {
         int light_type = int(lights[i].w);
