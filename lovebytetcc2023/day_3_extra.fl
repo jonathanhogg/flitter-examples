@@ -5,7 +5,7 @@
 -- are rendered between close balls, with use of transparency to make them
 -- fade in and out of existence.
 --
--- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0--
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 
 let n=150 r=100
 !physics dimensions=3 state=:d

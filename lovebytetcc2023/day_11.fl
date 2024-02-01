@@ -6,7 +6,7 @@
 -- clouds" effect. A single very bright light is placed at the centre of the
 -- voxel cube.
 --
--- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0--
+-- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 
 let d=..20 g=(.5+d)/20-.5 r=g*2+beat/2 p=g*1k
 !window size=1080
