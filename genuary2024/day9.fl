@@ -27,7 +27,7 @@ func char_bitmap(char)
                   fog_color=0 fog_min=80 fog_max=160
             !light color=2 direction=0;0;-1
             !transform rotate=beat/30 translate=-64;32;0
-                !material shininess=100
+                !material roughness=0.3
                     let m=len(TEXT)
                     for i in ..m
                         let characters=ord(TEXT[i])
