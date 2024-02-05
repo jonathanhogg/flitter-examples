@@ -23,7 +23,9 @@ flat in vec4 fragment_properties;
 out vec4 fragment_color;
 
 uniform int nlights;
-uniform vec4 lights[${max_lights * 4}];
+uniform lights_data {
+    vec4 lights[${max_lights * 4}];
+};
 uniform vec3 view_position;
 uniform vec3 view_focus;
 uniform bool monochrome;
