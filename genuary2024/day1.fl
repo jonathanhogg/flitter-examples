@@ -29,16 +29,17 @@ let SIZE=(RECORD or 1080)*(1;1)
     max_age=fuse_time+sparkle_time+decay_time
     sparkles=5000/max_age*average_interval
     total_fireworks=1000
-    launch_speed=500
-    boom=1
+    launch_speed=5000
+    boom=0.1
+    now=$(:firework;:clock)
 
 let launch_times=accumulate(average_interval*2*beta(:interval)[..total_fireworks])
-    active=(i if beat > t and (beat-t) < max_age) for i;t in zip(..total_fireworks, launch_times)
+    active=(i if now > t and (now-t) < max_age) for i;t in zip(..total_fireworks, launch_times)
 
 !physics state=:firework dimensions=3 resolution=1/30
     for i in active
-        let age=beat-launch_times[i] speed=launch_speed*(0.75+0.5*beta(:speed)[i])
-        !particle id=i radius=5 mass=10 position=(uniform(:pos;i)[..2]-0.5)*1k;25 velocity=(beta(:vel;i)[..2]-0.5;1)*speed
+        let age=now-launch_times[i] speed=launch_speed*(0.75+0.5*beta(:speed)[i])
+        !particle id=i radius=15 mass=10 position=(uniform(:pos;i)[..2]-0.5)*1k;25 velocity=(beta(:vel;i)[..2]-0.5;1)*speed
         if age > fuse_time
             if $(:firework;:sparkle;i;0)
                 -- This is an optimisation step to skip calculating the starting
@@ -65,7 +66,7 @@ let launch_times=accumulate(average_interval*2*beta(:interval)[..total_fireworks
                       fog_color=hsv(0.6;0.9;0.01) fog_min=2k fog_max=5k
                 !cylinder size=3k;3k;0.01 color=0.1
                 for i in active
-                    let age=beat-launch_times[i] pos=$(:firework;i)
+                    let age=now-launch_times[i] pos=$(:firework;i)
                     if age < fuse_time and pos
                         let vel=$(:firework;i;:velocity) speed=hypot(vel) dir=-vel/speed c=hsl(0.03;1;0.75-age/4)
                         !transform translate=pos shininess=100

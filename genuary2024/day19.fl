@@ -23,9 +23,9 @@
 
 import bloom_filter from '../common/filters.fl'
 
-let SIZE=RECORD*(1;1) or (1080;1080)
+let SIZE=RECORD*(1;1) or (1920;1080)
     N=1500 if RECORD else 1000
-    LIGHTS=150 if RECORD else 100
+    LIGHTS=100 if RECORD else 100
 
 let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
     heading=normalize(sum($(:boid;i;:velocity) for i in ..N, 3))
@@ -48,12 +48,15 @@ let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
 
 !window size=SIZE
     @bloom_filter id=:top radius=min(SIZE)//120 exposure=-1
-        !canvas3d samples=4 near=0.1 far=600 fog_max=600 max_lights=LIGHTS \
+        !canvas3d samples=4 near=0.1 far=600 fog_max=600 max_lights=LIGHTS fov_ref=:narrow \
                   camera_id=(:outside;:outside;:mass_forward;:mass_back;:outside_wide;:boidseye)[beat//10%6]
-            !camera id=:outside position=0;0;300 focus=centre_of_mass/2 fov=90/360
-            !camera id=:outside_wide position=0;0;260 focus=centre_of_mass fov=120/360
-            !camera id=:mass_forward position=centre_of_mass focus=centre_of_mass+heading fov=90/360
-            !camera id=:mass_back position=centre_of_mass focus=centre_of_mass-heading fov=60/360
+            !camera id=:outside position=0;0;300 fov=90/360 focus=centre_of_mass/2
+            !camera id=:outside_wide position=0;0;260 fov=120/360 focus=centre_of_mass
+            !camera id=:mass_forward fov=90/360 position=centre_of_mass focus=centre_of_mass+heading
+            !camera id=:mass_back fov=60/360 position=centre_of_mass focus=centre_of_mass-heading
+            let camera_boid=uniform(:boid)[beat//60]*N//1
+            !transform translate=$(:boid;camera_boid)
+                !camera id=:boidseye position=0 fov=90/360 focus=$(:boid;camera_boid;:velocity) up=-centre_of_mass
             for i in ..N
                 let velocity=$(:boid;i;:velocity)
                     color=colortemp(hypot(velocity)*50)
@@ -61,8 +64,6 @@ let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
                     !material color=0.5 metal=true roughness=0.3 emissive=color*250
                         !sphere
                         !cone start=0 end=velocity/5
-                    if i == uniform(:boid)[beat//60]*N//1
-                        !camera id=:boidseye position=0 focus=velocity up=-centre_of_mass fov=90/360
                     if i < LIGHTS
                         !light position=0 color=color*(20M/LIGHTS)
     !record filename=('day19.mp4' if RECORD and beat > 60) codec=:hevc crf=25 hidden=true

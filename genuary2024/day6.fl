@@ -16,23 +16,22 @@
 let SIZE=RECORD or 1080
     TOASTERS=50
 
-func rounded_box(_, position=0, size=1, radius=0.25, side_texture_id=null)
-    let size=size*(1;1;1)-radius*2
+func rounded_box(_, position=0, size=1, radius=0.25, side_texture_id=null, segments=32)
+    let size=size*(1;1;1) inner=size-radius*2
     (!transform translate=position) if side_texture_id  else (!union position=position)
-        for x in (-1;1)*size[0]/2
-            for y in (-1;1)*size[1]/2
-                !cylinder start=x;y;-size[2]/2 end=x;y;size[2]/2 radius=radius
-                for z in (-1;1)*size[2]/2
-                    !sphere position=x;y;z size=radius
-            !box position=x;0;0 size=radius*2;size[1];size[2] texture_id=side_texture_id
-            for z in (-1;1)*size[2]/2
-                !cylinder start=x;-size[1]/2;z end=x;size[1]/2;z radius=radius
-        for y in (-1;1)*size[1]/2
-            !box position=0;y;0 size=size[0];radius*2;size[2] texture_id=side_texture_id
-            for z in (-1;1)*size[2]/2
-                !cylinder start=-size[0]/2;y;z end=size[0]/2;y;z radius=radius
-        for z in (-1;1)*size[2]/2
-            !box position=0;0;z size=size[0];size[1];radius*2 texture_id=side_texture_id
+        !box size=size[0];inner[1];inner[2] texture_id=side_texture_id
+        !box size=inner[0];size[1];inner[2] texture_id=side_texture_id
+        !box size=inner[0];inner[1];size[2] texture_id=side_texture_id
+        for x in (-1;1)*inner[0]/2
+            for y in (-1;1)*inner[1]/2
+                !cylinder segments=segments start=x;y;-inner[2]/2 end=x;y;inner[2]/2 radius=radius
+                for z in (-1;1)*inner[2]/2
+                    !sphere segments=segments position=x;y;z size=radius
+            for z in (-1;1)*inner[2]/2
+                !cylinder segments=segments start=x;-inner[1]/2;z end=x;inner[1]/2;z radius=radius
+        for y in (-1;1)*inner[1]/2
+            for z in (-1;1)*inner[2]/2
+                !cylinder segments=segments start=-inner[0]/2;y;z end=inner[0]/2;y;z radius=radius
 
 func toaster(_, bread=0, wings=0, bread_texture_id=null)
     let b=impulse(bread%1, 0.1)

@@ -1,17 +1,17 @@
 -- Snowflake
 --
--- This example uses a 2D canvas and makes use of recursion. Recursion is not
--- supported in Flitter, but can be forced using an old lambda-calculus trick.
--- A number of other obtuse things are done to keep the character count low,
--- like the various inline `if` and `for` expressions.
+-- This example uses a 2D canvas and makes use of recursion.
+--
+-- A number of obtuse things are done to keep the character count low, like the
+-- various inline `if` and `for` expressions.
 --
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 
-let t=beat/20 s=300
-func f(f,d,r,l)
+let t=beat/20 s=300 d=sine(t)/6
+func f(r,l)
  for i in (1..5 if r)
   (!group translate=i*s/4;0 rotate=d scale=i/8) for d in (d;-d)
-   f(f,d,r-1,l/2)
+   f(r-1, l/2)
  !line points=0;12;s;6;s;-6;0;-12;0;10 fill=1
 !window size=1080
  !canvas translate=540
@@ -19,4 +19,4 @@ func f(f,d,r,l)
    (!stop color=i<1;i<2;1) for i in ..3
   for i in ..6
    !group rotate=i/6+t
-    f(f,sine(t)/6,2,1)
+    f(2,1)

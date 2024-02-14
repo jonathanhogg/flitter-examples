@@ -39,7 +39,7 @@ let SIZE=RECORD*(1;1) or (1080;1080)
     LAMP_TEMPERATURE=3000
     THERMAL_GRADIENT=-2000
     THERMAL_CURVE=2
-    SMOOTHING=15
+    SMOOTHING=10
     R=80
 
 let t=$(:blob;:clock)
@@ -77,7 +77,7 @@ func blob_color(i)
             !light color=colortemp(LAMP_TEMPERATURE)*100*R**2 direction=0;1;0 position=0;-R*2;0 outer=30/360
             !material roughness=0.35 metal=true color=0.5
                 !group fragment=read('../glsl/sdf_shader.frag') \
-                       NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=100 normal_delta=0.1 epsilon=0.05 far=R*3 \
+                       NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=50 normal_delta=0.1 epsilon=0.05 far=R*3 \
                        sphere_positions=($(:blob;i) for i in ..NBLOBS) \
                        sphere_colors=(blob_color(i) for i in ..NBLOBS) \
                        sphere_radii=blob_radius

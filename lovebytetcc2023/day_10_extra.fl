@@ -17,7 +17,7 @@ let b=beta r=..10k o=b(0)[r] p=b(1)[r] c=..2|.02 t=beat/10
 func l(_,c,d)
  !light color=c/10 direction=d;-1
 !window size=1080
- !canvas3d translate=-540 scale=10.8 fov=.2 color=1 composite=:add depth_test=0
+ !canvas3d samples=4 translate=-540 scale=10.8 fov=.2 color=1 composite=:add depth_test=0
   @l c=2;1;0 d=1;0
   @l c=0;1;2 d=0;1
   @l c=0;6;0 d=0;0
