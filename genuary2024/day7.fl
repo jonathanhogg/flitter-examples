@@ -12,7 +12,8 @@
 
 let SIZE=RECORD or 1080
     DOLLS=120
-    END=min(DOLLS, beat//1)
+    T=$(:doll;:clock)
+    END=min(DOLLS, T//1)
     START=max(0, END-DOLLS)
     SEGMENTS=32
     TUBE=20
@@ -25,7 +26,7 @@ let SIZE=RECORD or 1080
 
 !physics state=:doll dimensions=3 resolution=1/120 if not realtime
     for i in START..END
-        let age=beat-i
+        let age=T-i
             start=(beta(:start;i)[..3]-0.5)*TUBE*2 + (0;0;600)
         for id;r in JOINTS
             !particle id=i;id radius=r charge=r mass=r position=start+uniform(i;id)[..3]*10
@@ -57,5 +58,5 @@ let SIZE=RECORD or 1080
                         !sphere position=$(:doll;i;id) size=r
                     for from;to;d;r in BONES
                         !cylinder start=$(:doll;i;from) end=$(:doll;i;to) radius=r
-    !record filename=('day7.mp4' if RECORD and beat>10) limit=60 codec=:hevc crf=20 hidden=true
+    !record filename=('day7.mp4' if RECORD and T>10) limit=60 codec=:hevc crf=20 hidden=true
         !reference id=:top

@@ -23,7 +23,7 @@
 
 import bloom_filter from '../common/filters.fl'
 
-let SIZE=RECORD*(1;1) or (1920;1080)
+let SIZE=RECORD or (1920;1080)
     N=1500 if RECORD else 1000
     LIGHTS=100 if RECORD else 100
 

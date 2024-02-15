@@ -21,7 +21,7 @@
 
 import bloom_filter from '../common/filters.fl'
 
-let SIZE=(RECORD or 1080)*(1;1)
+let SIZE=RECORD or 1080
     average_interval=1
     fuse_time=2
     sparkle_time=5

@@ -22,16 +22,16 @@
 
 import edge_detect from '../common/filters.fl'
 
-let SIZE=RECORD*(1;1) or (1080;1080)
-    SCALE=hypot(SIZE)/100
-    RADIUS=hypot(SIZE)/4
+let SIZE=RECORD or 1080
+    SCALE=hypot(SIZE[..2])/100
+    RADIUS=hypot(SIZE[..2])/4
     NPOINTS=500
 
 let VORONOI="""
 #version 330
 
 const int NPOINTS = """;NPOINTS;""";
-const float MAX_DISTANCE = """;hypot(SIZE);""";
+const float MAX_DISTANCE = """;hypot(SIZE[..2]);""";
 
 in vec2 coord;
 out vec4 color;

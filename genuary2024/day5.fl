@@ -29,7 +29,7 @@
 
 %pragma tempo 60
 
-let SIZE=RECORD*(1;1) or (1440;1080)*2
+let SIZE=RECORD or (1440;1080)*2
     COLS;ROWS=9;6
     GRID=min(SIZE/(COLS;ROWS))
     OVERLAYS=35

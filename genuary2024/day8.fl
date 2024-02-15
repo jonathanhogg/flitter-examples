@@ -14,8 +14,8 @@
 
 import bloom_filter from '../common/filters.fl'
 
-let SIZE=RECORD*(1;1) or (1080;1080)
-    SCALE=hypot(SIZE)/2000
+let SIZE=RECORD or 1080
+    SCALE=hypot(SIZE[..2])/2000
     POINTS=10k
     PATHS=100
     TIMESCALE=50

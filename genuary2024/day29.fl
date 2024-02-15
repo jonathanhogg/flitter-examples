@@ -31,7 +31,7 @@
 
 import bloom_filter from '../common/filters.fl'
 
-let SIZE=RECORD*(1;1) or (1080;1080)
+let SIZE=RECORD or 1080
     NBLOBS=100
     NEUTRAL_DENSITY=1m
     NEUTRAL_TEMPERATURE=1500

@@ -13,7 +13,7 @@
 
 import feedback_filter from '../common/filters.fl'
 
-let SIZE=RECORD*(1;1) or (1080;1080)
+let SIZE=RECORD or 1080
     ROW_HEIGHT=36
     ROWS=SIZE[1]//ROW_HEIGHT
     TRIANGLE_WIDTH=ROW_HEIGHT*2

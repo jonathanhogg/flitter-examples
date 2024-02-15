@@ -28,7 +28,7 @@
 -- flitter day2.fl --lockstep --fps=60 --runtime=60 --define RECORD=1080
 
 
-let SIZE=(RECORD or 2160)*(1;1)
+let SIZE=RECORD or 2160
     NPOINTS=3
 
 let SHADER="""
@@ -63,7 +63,7 @@ let initial_points=uniform(:position)[..2*NPOINTS]*SIZE
     for i in ..NPOINTS
         !particle id=i charge=1 position=initial_points[i*2..(i+1)*2] velocity=uniform(:velocity;i)[..2]*SIZE
         for j in i+1..NPOINTS
-            !distance from=i to=j max=hypot(SIZE)/3 strength=0.1
+            !distance from=i to=j max=hypot(SIZE[..2])/3 strength=0.1
     !electrostatic strength=1M
     !random strength=1k
     !drag strength=1m

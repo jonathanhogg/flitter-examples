@@ -33,7 +33,7 @@
 
 %pragma tempo 60
 
-let SIZE=(RECORD or 2160)*(1;1)
+let SIZE=RECORD or 2160
 
 !window size=SIZE
     !canvas id=:texture scale=SIZE linear=true hidden=true

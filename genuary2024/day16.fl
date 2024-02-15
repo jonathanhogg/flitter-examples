@@ -28,12 +28,12 @@
 
 import bloom_filter from '../common/filters.fl'
 
-let SIZE=RECORD*(1;1) or (1080;1080)*2
+let SIZE=RECORD or 1080
     M=20
     N=10k
 
 !window size=SIZE
-    @bloom_filter id=:top blursize=SIZE/2 radius=hypot(SIZE)/200 exposure=-2
+    @bloom_filter id=:top blursize=SIZE/2 radius=hypot(SIZE[..2])/200 exposure=-2
         !canvas3d samples=8 viewpoint=0;0;100 fov=40/360 rotate=beat/(30;20;15)
             !light color=1 direction=1;0;0
             !light color=1 direction=0;1;0
