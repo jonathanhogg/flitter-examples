@@ -15,6 +15,7 @@ const vec3 greyscale = vec3(0.299, 0.587, 0.114);
 in vec3 world_position;
 in vec3 world_normal;
 in vec2 texture_uv;
+in vec2 coord;
 
 flat in vec4 fragment_albedo;
 flat in vec3 fragment_emissive;
@@ -49,6 +50,8 @@ const float epsilon = ${epsilon};
 uniform vec3 sphere_positions[NSPHERES];
 uniform vec3 sphere_colors[NSPHERES];
 uniform float sphere_radii[NSPHERES];
+uniform sampler2D depth_buffer;
+uniform mat4 pv_matrix;
 
 // Basic ray-marching SDF implementation:
 
@@ -145,17 +148,29 @@ void main() {
     // colouring the surface fragment of the render triangular mesh and using
     // its Z for the depth buffer. Effectively we treat the rendered volumes
     // as pocket universes that contain the SDF scene.
-    //
+
+    // Do a test against out pre-calculated depth buffer to see if this is an
+    // overdrawn fragment that can be ignored:
+    vec4 depth = texture(depth_buffer, coord);
+    if (depth.a == 1 && abs(view_distance - depth.r) > 0.25) {
+        // fragment_color = vec4(0);
+        // return;
+        discard;
+    }
+
+    // Ray-march to find the actual position, normal and emissive colour of this
+    // fragment:
     Trace trace = ray_march(world_position, -V, far-view_distance);
     if (isinf(trace.d)) {
-        fragment_color = vec4(0);
-        return;
+        // fragment_color = vec4(0);
+        // return;
+        discard;
     }
     vec3 emissive = trace.c;
     vec3 N = trace.n;
     view_distance += trace.d;
     vec3 world_pos = world_position - V*trace.d;
-    //
+
     // The rest of the material properties and lighting calculation is done
     // as per usual.
 
@@ -234,4 +249,5 @@ void main() {
         final_color = vec3(grey);
     }
     fragment_color = vec4(final_color * tint, opacity);
+    vec4 pos = pv_matrix * vec4(world_pos, 1);
 }
