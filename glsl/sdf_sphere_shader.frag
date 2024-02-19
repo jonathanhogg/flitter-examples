@@ -149,22 +149,20 @@ void main() {
     // its Z for the depth buffer. Effectively we treat the rendered volumes
     // as pocket universes that contain the SDF scene.
 
-    // Do a test against out pre-calculated depth buffer to see if this is an
+    // Do a test against our pre-calculated depth buffer to see if this is an
     // overdrawn fragment that can be ignored:
     vec4 depth = texture(depth_buffer, coord);
-    if (depth.a == 1 && abs(view_distance - depth.r) > 0.25) {
-        // fragment_color = vec4(0);
-        // return;
-        discard;
+    if (depth.a == 1 && view_distance > depth.r + 0.25) {
+        fragment_color = vec4(0);
+        return;
     }
 
     // Ray-march to find the actual position, normal and emissive colour of this
     // fragment:
     Trace trace = ray_march(world_position, -V, far-view_distance);
     if (isinf(trace.d)) {
-        // fragment_color = vec4(0);
-        // return;
-        discard;
+        fragment_color = vec4(0);
+        return;
     }
     vec3 emissive = trace.c;
     vec3 N = trace.n;
