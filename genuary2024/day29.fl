@@ -48,22 +48,22 @@ let SIZE=RECORD or 1080
     SMOOTHING=10
     R=80
 
-let t=$(:blob;:clock)
+let t=$(:blob;:clock) or 0
     blob_start_temp=NEUTRAL_TEMPERATURE+100*normal(:radius)[..NBLOBS]
     blob_mass=0.05+uniform(:mass)[..NBLOBS]**3*0.95
     blob_height=$(:blob;i)[1] for i in ..NBLOBS
     lamp_radiant_temperature=LAMP_TEMPERATURE+(1-((R-blob_height)/(R*2))**THERMAL_CURVE)*THERMAL_GRADIENT
-    temperature_counter=counter(:temperature, t)
-    blob_temperature=(max(1, blob_start_temp[i]+temperature_counter[i]) for i in ..NBLOBS)
+    blob_temperature=$(:temperature) or blob_start_temp
     blob_volume=blob_mass/NEUTRAL_DENSITY*blob_temperature/NEUTRAL_TEMPERATURE
     blob_radius=blob_volume**(1/3)
     blob_area=blob_radius**2
     temp=map(0.9, blob_temperature, NEUTRAL_TEMPERATURE)
     rate_of_temperature_change=THERMAL_CONDUCTIVITY*(lamp_radiant_temperature-temp)/blob_mass*blob_area
-    temperature_update=counter(:temperature, t, rate_of_temperature_change)
 
 func blob_color(i)
     colortemp(blob_temperature[i])*500
+
+!counter state=:temperature initial=blob_start_temp time=t rate=rate_of_temperature_change minimum=1 maximum=LAMP_TEMPERATURE
 
 !physics dimensions=3 state=:blob resolution=1/30
     !adhesion strength=2 overlap=0.15
