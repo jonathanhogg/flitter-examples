@@ -28,7 +28,7 @@ let SIZE=RECORD or 1080
     NPOINTS=500
 
 let VORONOI="""
-#version 330
+${HEADER}
 
 const int NPOINTS = """;NPOINTS;""";
 const float MAX_DISTANCE = """;hypot(SIZE[..2]);""";
@@ -61,9 +61,9 @@ void main() {
     vec2 p0 = points[index0].xy, p1 = points[index1].xy;
     vec2 v1 = normalize(p1 - p0);
     float a = dot(p - p0, v1), b = dot(p1 - p, v1);
-    float k = pow(1 - a/b, 0.75);
+    float k = pow(1.0 - a/b, 0.75);
     if (b - a > points[index0].w) {
-        color = vec4(hsv2rgb(vec3(points[index0].z, 1, k)), 1);
+        color = vec4(hsv2rgb(vec3(points[index0].z, 1.0, k)), 1.0);
     } else {
         discard;
     }
