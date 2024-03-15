@@ -41,11 +41,11 @@ uniform float fog_curve;
 // to change or passed in as uniforms otherwise.
 //
 const int NSPHERES = ${NSPHERES};
-const int far = ${far};
-const float smoothing = ${smoothing};
+const float far = ${float(far)};
+const float smoothing = ${float(smoothing)};
 const int max_iterations = ${max_iterations};
-const float normal_delta = ${normal_delta};
-const float epsilon = ${epsilon};
+const float normal_delta = ${float(normal_delta)};
+const float epsilon = ${float(epsilon)};
 uniform vec3 sphere_positions[NSPHERES];
 uniform vec3 sphere_colors[NSPHERES];
 uniform float sphere_radii[NSPHERES];
@@ -173,7 +173,7 @@ void main() {
     // The rest of the material properties and lighting calculation is done
     // as per usual.
 
-    float fog_alpha = (fog_max > fog_min) && (fog_curve > 0) ? pow(clamp((view_distance - fog_min) / (fog_max - fog_min), 0, 1), 1/fog_curve) : 0;
+    float fog_alpha = (fog_max > fog_min) && (fog_curve > 0.0) ? pow(clamp((view_distance - fog_min) / (fog_max - fog_min), 0.0, 1.0), 1.0 / fog_curve) : 0.0;
     if (fog_alpha == 1.0) {
         fragment_color = vec4(0.0);
         return;
