@@ -2,7 +2,7 @@
 // Copyright 2024 by Jonathan Hogg and licensed under the original Flitter
 // BSD 2-clause license https://github.com/jonathanhogg/flitter/blob/main/LICENSE
 
-#version 330
+${HEADER}
 
 in vec3 world_position;
 
@@ -19,5 +19,5 @@ void main() {
     } else {
         view_distance = length(view_position - world_position);
     }
-    fragment_color = vec4(view_distance, 0, 0, 1);
+    fragment_color = vec4(view_distance, 0.0, 0.0, 1.0);
 }

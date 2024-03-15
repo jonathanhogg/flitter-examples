@@ -61,7 +61,7 @@ let t=$(:blob;:clock) or 0
     rate_of_temperature_change=THERMAL_CONDUCTIVITY*(lamp_radiant_temperature-temp)/blob_mass*blob_area
 
 func blob_color(i)
-    colortemp(blob_temperature[i])*500
+    colortemp(blob_temperature[i])*300
 
 !counter state=:temperature initial=blob_start_temp time=t rate=rate_of_temperature_change minimum=1 maximum=LAMP_TEMPERATURE
 
@@ -76,27 +76,27 @@ func blob_color(i)
         !distance from=:middle to=i max=R strength=10
 
 !window size=SIZE
-    !canvas3d id=:depth_buffer hidden=true camera_id=:cam far=R*3 fov=0.2 fov_ref=:vertical fragment=read('../glsl/depth_shader.frag')
+    !canvas3d id=:depth_buffer colorbits=32 hidden=true camera_id=:cam far=R*3 fov=0.2 fov_ref=:vertical composite=:source fragment=read('../glsl/depth_shader.frag')
         !transform rotate_y=beat/30
             !camera id=:cam viewpoint=0;0;R*2
         for i in ..NBLOBS
-            !sphere position=$(:blob;i) size=blob_radius[i]+SMOOTHING
+            !sphere segments=32 position=$(:blob;i) size=blob_radius[i]+SMOOTHING
     @bloom_filter id=:top blursize=SIZE/2 radius=SIZE[0]/108
-        !canvas3d camera_id=:cam far=R*3 fov=0.2 fov_ref=:vertical fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_min=50 fog_max=R*3 max_lights=NBLOBS+1
+        !canvas3d samples=4 camera_id=:cam far=R*3 fov=0.2 fov_ref=:vertical fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_min=50 fog_max=R*3 max_lights=NBLOBS+1
             !transform rotate_y=beat/30
                 !camera id=:cam viewpoint=0;0;R*2
-            !light color=colortemp(LAMP_TEMPERATURE)*100*R**2 direction=0;1;0 position=0;-R*2;0 outer=30/360
-            !material roughness=0.35 metal=true color=0.5
+            !light color=colortemp(LAMP_TEMPERATURE)*50 direction=0;1;0
+            !material roughness=0.3 color=0.5 metal=true
                 !group fragment=read('../glsl/sdf_sphere_shader.frag') \
                        vertex=read('../glsl/sdf_sphere_shader.vert') \
-                       NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=20 normal_delta=0.1 epsilon=0.05 far=R*3 \
+                       NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=50 normal_delta=0.1 epsilon=0.05 far=R*3 \
                        sphere_positions=($(:blob;i) for i in ..NBLOBS) \
                        sphere_colors=(blob_color(i) for i in ..NBLOBS) \
                        sphere_radii=blob_radius \
                        depth_buffer=:depth_buffer
                     for i in ..NBLOBS
                         !transform translate=$(:blob;i)
-                            !sphere size=blob_radius[i]+SMOOTHING
-                            !light position=0 color=blob_color(i)*blob_area[i]
+                            !sphere segments=32 size=blob_radius[i]+SMOOTHING
+                            !light position=0 radius=blob_radius[i] color=blob_color(i)*blob_area[i]
     !record filename=('day29.mp4' if RECORD and t > 60) codec=:hevc crf=25 hidden=true
         !reference id=:top

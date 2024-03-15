@@ -8,14 +8,13 @@
 // Copyright 2024 by Jonathan Hogg and licensed under the original Flitter
 // BSD 2-clause license https://github.com/jonathanhogg/flitter/blob/main/LICENSE
 
-#version 330
+${HEADER}
 
 const vec3 greyscale = vec3(0.299, 0.587, 0.114);
 
 in vec3 world_position;
 in vec3 world_normal;
 in vec2 texture_uv;
-in vec2 coord;
 
 flat in vec4 fragment_albedo;
 flat in vec3 fragment_emissive;
@@ -25,7 +24,7 @@ out vec4 fragment_color;
 
 uniform int nlights;
 uniform lights_data {
-    vec4 lights[${max_lights * 4}];
+    mat4 lights[${max_lights}];
 };
 uniform vec3 view_position;
 uniform vec3 view_focus;
@@ -56,7 +55,7 @@ uniform mat4 pv_matrix;
 // Basic ray-marching SDF implementation:
 
 const float INFINITY = 1.0 / 0.0;
-vec2 NORMAL = vec2(normal_delta, 0);
+vec2 NORMAL = vec2(normal_delta, 0.0);
 
 struct Trace {
     float d;
@@ -70,9 +69,9 @@ float scene_sdf(vec3 point) {
     float d = length(point - sphere_positions[0]) - sphere_radii[0];
     for (int i = 1; i < NSPHERES; i++) {
         float sd = length(point - sphere_positions[i]) - sphere_radii[i];
-        if (smoothing > 0) {
-            float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0, 1);
-            d = mix(sd, d, h) - smoothing*h*(1-h);
+        if (smoothing > 0.0) {
+            float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0.0, 1.0);
+            d = mix(sd, d, h) - smoothing*h*(1.0-h);
         } else if (sd < d) {
             d = sd;
         }
@@ -87,9 +86,9 @@ vec4 scene_sdf_rgb(vec3 point) {
     vec3 rgb = sphere_colors[0];
     for (int i = 1; i < NSPHERES; i++) {
         float sd = length(point - sphere_positions[i]) - sphere_radii[i];
-        if (smoothing > 0) {
-            float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0, 1);
-            d = mix(sd, d, h) - smoothing*h*(1-h);
+        if (smoothing > 0.0) {
+            float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0.0, 1.0);
+            d = mix(sd, d, h) - smoothing*h*(1.0-h);
             rgb = mix(sphere_colors[i], rgb, h);
         } else if (sd < d) {
             d = sd;
@@ -105,12 +104,12 @@ vec4 scene_sdf_rgb(vec3 point) {
 //
 Trace ray_march(vec3 origin, vec3 direction, float max_distance) {
     vec3 p = origin;
-    float d = 0;
+    float d = 0.0;
     for (int i = 1; i < max_iterations; i++) {
         float delta = scene_sdf(p);
         d += delta;
         if (d > max_distance) {
-            return Trace(INFINITY, vec3(0), vec3(0));
+            return Trace(INFINITY, vec3(0.0), vec3(0.0));
         }
         p = origin + d * direction;
         if (abs(delta) < epsilon) {
@@ -151,9 +150,11 @@ void main() {
 
     // Do a test against our pre-calculated depth buffer to see if this is an
     // overdrawn fragment that can be ignored:
+    vec4 position = pv_matrix * vec4(world_position, 1);
+    vec2 coord = (position.xy / position.w + 1.0) / 2.0;
     vec4 depth = texture(depth_buffer, coord);
-    if (depth.a == 1 && view_distance > depth.r + 0.25) {
-        fragment_color = vec4(0);
+    if (depth.a == 1.0 && view_distance > depth.r + epsilon) {
+        fragment_color = vec4(0.0);
         return;
     }
 
@@ -161,7 +162,7 @@ void main() {
     // fragment:
     Trace trace = ray_march(world_position, -V, far-view_distance);
     if (isinf(trace.d)) {
-        fragment_color = vec4(0);
+        fragment_color = vec4(0.0);
         return;
     }
     vec3 emissive = trace.c;
@@ -173,8 +174,8 @@ void main() {
     // as per usual.
 
     float fog_alpha = (fog_max > fog_min) && (fog_curve > 0) ? pow(clamp((view_distance - fog_min) / (fog_max - fog_min), 0, 1), 1/fog_curve) : 0;
-    if (fog_alpha == 1) {
-        fragment_color = vec4(0);
+    if (fog_alpha == 1.0) {
+        fragment_color = vec4(0.0);
         return;
     }
     vec3 albedo = fragment_albedo.rgb;
@@ -185,67 +186,121 @@ void main() {
     float roughness = fragment_properties.z;
     float occlusion = fragment_properties.z;
 
-    vec3 diffuse_color = vec3(0);
+    vec3 diffuse_color = vec3(0.0);
     vec3 specular_color = emissive;
     // vec3 N = normalize(world_normal);
-    float rf0 = (ior - 1) / (ior + 1);
+    float rf0 = (ior - 1.0) / (ior + 1.0);
     vec3 F0 = mix(vec3(rf0*rf0), albedo, metal);
-    for (int i = 0; i < nlights * 4; i += 4) {
-        int light_type = int(lights[i].w);
-        float inner_cone = lights[i+1].w;
-        float outer_cone = lights[i+2].w;
-        vec3 light_color = lights[i].xyz;
-        vec3 light_position = lights[i+1].xyz;
-        vec3 light_direction = lights[i+2].xyz;
-        vec4 light_falloff = lights[i+3];
-        if (light_type == ${Ambient}) {
-            diffuse_color += (1 - F0) * (1 - metal) * albedo * light_color * occlusion;
-        } else {
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float r = roughness + 1.0;
+    float k = (r*r) / 8.0;
+    float NdotV = clamp(dot(N, V), 0.0, 1.0);
+    float Gnom = (NdotV / (NdotV * (1.0 - k) + k));
+    for (int i = 0; i < nlights; i++) {
+        mat4 light = lights[i];
+        int light_type = int(light[0].w);
+        vec3 light_color = light[0].xyz;
+        int passes = 1;
+        for (int pass = 0; pass < passes; pass++) {
             vec3 L;
-            float attenuation = 1;
-            float light_distance = 1;
+            float attenuation = 1.0;
+            float light_distance = 1.0;
             if (light_type == ${Point}) {
-                L = light_position - world_pos; // was world_position
+                vec3 light_position = light[1].xyz;
+                float light_radius = light[2].w;
+                L = light_position - world_pos;
                 light_distance = length(L);
-                L /= light_distance;
+                if (light_radius > 0.0) {
+                    passes = 2;
+                    attenuation = clamp(1.0 - (light_radius / light_distance), 0.0, 1.0);
+                    if (pass == 0) {
+                        light_distance = max(0.0, light_distance - light_radius*0.99);
+                    } else {
+                        vec3 R = reflect(V, N);
+                        vec3 l = dot(L, R) * R - L;
+                        L += l * min(0.99, light_radius/length(l));
+                    }
+                }
+                L = normalize(L);
             } else if (light_type == ${Spot}) {
-                L = light_position - world_pos; // was world_position
+                vec3 light_position = light[1].xyz;
+                vec3 light_direction = light[2].xyz;
+                float inner_cone = light[1].w;
+                float outer_cone = light[2].w;
+                L = light_position - world_pos;
                 light_distance = length(L);
                 L /= light_distance;
                 float spot_cosine = dot(L, -light_direction);
-                attenuation = 1 - clamp((inner_cone-spot_cosine) / (inner_cone-outer_cone), 0, 1);
-            } else {
+                attenuation = 1.0 - clamp((inner_cone-spot_cosine) / (inner_cone-outer_cone), 0.0, 1.0);
+            } else if (light_type == ${Line}) {
+                passes = 2;
+                vec3 light_position = light[1].xyz;
+                float light_length = length(light[2].xyz);
+                vec3 light_direction = light[2].xyz / light_length;
+                float light_radius = light[2].w;
+                L = light_position - world_pos;
+                if (pass == 0) {
+                    float LdotN = dot(L, N);
+                    float cp = clamp(dot(-L, light_direction), 0.0, light_length);
+                    float ip = clamp(-LdotN / dot(light_direction, N), 0.0, light_length);
+                    float m = light_length / 2.0;
+                    if (LdotN < 0.0) {
+                        m = (ip + light_length) / 2.0;
+                        cp = max(cp, ip);
+                    } else if (dot(L + light_direction*light_length, N) < 0.0) {
+                        m = ip / 2.0;
+                        cp = min(cp, ip);
+                    }
+                    L += light_direction * (cp*3.0 + m) / 4.0;
+                    light_distance = length(L);
+                    L /= light_distance;
+                    attenuation = clamp(1.0 - (light_radius / light_distance), 0.0, 1.0);
+                    light_distance -= min(light_radius, light_distance*0.99);
+                } else {
+                    vec3 R = reflect(V, N);
+                    mat3 M = mat3(R, light_direction, cross(R, light_direction));
+                    L += clamp(-(inverse(M) * L).y, 0.0, light_length) * light_direction;
+                    vec3 l = dot(L, R) * R - L;
+                    light_distance = length(L);
+                    L += l * min(0.99, light_radius/light_distance);
+                    attenuation = clamp(1.0 - (light_radius / light_distance), 0.0, 1.0);
+                    light_distance = length(L);
+                    L /= light_distance;
+                }
+            } else if (light_type == ${Directional}) {
+                vec3 light_direction = light[2].xyz;
                 L = -light_direction;
+            } else { // (light_type == ${Ambient})
+                diffuse_color += (1.0 - F0) * (1.0 - metal) * albedo * light_color * occlusion;
+                break;
             }
+            vec4 light_falloff = light[3];
             float ld2 = light_distance * light_distance;
-            vec4 ds = vec4(1, light_distance, ld2, light_distance * ld2);
+            vec4 ds = vec4(1.0, light_distance, ld2, light_distance * ld2);
             attenuation /= dot(ds, light_falloff);
             vec3 H = normalize(V + L);
-            float NdotL = clamp(dot(N, L), 0, 1);
-            float NdotV = clamp(dot(N, V), 0, 1);
-            float NdotH = clamp(dot(N, H), 0, 1);
-            float HdotV = clamp(dot(H, V), 0, 1);
-            float a = roughness * roughness;
-            float a2 = a * a;
-            float denom = NdotH * NdotH * (a2-1) + 1;
+            float NdotL = clamp(dot(N, L), 0.0, 1.0);
+            float NdotH = clamp(dot(N, H), 0.0, 1.0);
+            float HdotV = clamp(dot(H, V), 0.0, 1.0);
+            float denom = NdotH * NdotH * (a2-1.0) + 1.0;
             float NDF = a2 / (denom * denom);
-            float r = roughness + 1;
-            float k = (r*r) / 8;
-            float G = (NdotV / (NdotV * (1 - k) + k)) * (NdotL / (NdotL * (1 - k) + k));
-            vec3 F = F0 + (1 - F0) * pow(1 - HdotV, 5);
-            vec3 diffuse = (1 - F) * (1 - metal) * albedo;
-            vec3 specular = (NDF * G * F) / (4 * NdotV * NdotL + 1e-6);
+            float G = Gnom * (NdotL / (NdotL * (1.0 - k) + k));
+            vec3 F = F0 + (1.0 - F0) * pow(1.0 - HdotV, 5.0);
             vec3 radiance = light_color * attenuation * NdotL;
-            diffuse_color += diffuse * radiance;
-            specular_color += specular * radiance;
+            if (pass == 0) {
+                diffuse_color += radiance * (1.0 - F) * (1.0 - metal) * albedo;
+            }
+            if (pass == passes-1) {
+                specular_color += radiance * (NDF * G * F) / (4.0 * NdotV * NdotL + 1e-6);
+            }
         }
     }
-    float opacity = 1 - transparency;
-    vec3 final_color = mix(diffuse_color, fog_color, fog_alpha) * opacity + specular_color * (1 - fog_alpha);
+    float opacity = 1.0 - transparency;
+    vec3 final_color = mix(diffuse_color, fog_color, fog_alpha) * opacity + specular_color * (1.0 - fog_alpha);
     if (monochrome) {
         float grey = dot(final_color, greyscale);
         final_color = vec3(grey);
     }
     fragment_color = vec4(final_color * tint, opacity);
-    vec4 pos = pv_matrix * vec4(world_pos, 1);
 }
