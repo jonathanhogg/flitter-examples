@@ -11,7 +11,7 @@ uniform int radius;
 uniform float sigma;
 
 void main() {
-    float s = radius * sigma / 2.0;
+    float s = float(radius) * sigma / 2.0;
     vec3 gaussian;
     gaussian.x = 1.0;
     gaussian.y = exp(-0.5 / (s * s));
