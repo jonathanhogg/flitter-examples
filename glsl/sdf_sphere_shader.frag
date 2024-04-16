@@ -1,3 +1,4 @@
+${HEADER}
 
 // This is mostly the standard lighting shader from Flitter, but with a simple
 // SDF sphere-rendering capability hacked in and texture-mapping support
@@ -7,8 +8,6 @@
 //
 // Copyright 2024 by Jonathan Hogg and licensed under the original Flitter
 // BSD 2-clause license https://github.com/jonathanhogg/flitter/blob/main/LICENSE
-
-${HEADER}
 
 const vec3 greyscale = vec3(0.299, 0.587, 0.114);
 

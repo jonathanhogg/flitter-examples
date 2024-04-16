@@ -1,8 +1,7 @@
+${HEADER}
 
 // Copyright 2024 by Jonathan Hogg and licensed under the original Flitter
 // BSD 2-clause license https://github.com/jonathanhogg/flitter/blob/main/LICENSE
-
-${HEADER}
 
 in vec3 world_position;
 
