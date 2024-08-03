@@ -14,24 +14,30 @@
 -- flitter day6.fl --lockstep --fps=30 --runtime=31 --define 'RECORD=1080'
 
 let SIZE=RECORD or 1080
-    TOASTERS=50
+    TOASTERS=100
 
 func rounded_box(_, position=0, size=1, radius=0.25, side_texture_id=null, segments=32)
     let size=size*(1;1;1) inner=size-radius*2
     (!transform translate=position) if side_texture_id  else (!union position=position)
-        !box size=size[0];inner[1];inner[2] texture_id=side_texture_id
-        !box size=inner[0];size[1];inner[2] texture_id=side_texture_id
-        !box size=inner[0];inner[1];size[2] texture_id=side_texture_id
+        if inner[1] and inner[2]
+            !box size=size[0];inner[1];inner[2] texture_id=side_texture_id
+        if inner[0] and inner[2]
+            !box size=inner[0];size[1];inner[2] texture_id=side_texture_id
+        if inner[0] and inner[1]
+            !box size=inner[0];inner[1];size[2] texture_id=side_texture_id
         for x in (-1;1)*inner[0]/2
-            for y in (-1;1)*inner[1]/2
-                !cylinder segments=segments start=x;y;-inner[2]/2 end=x;y;inner[2]/2 radius=radius
-                for z in (-1;1)*inner[2]/2
-                    !sphere segments=segments position=x;y;z size=radius
-            for z in (-1;1)*inner[2]/2
-                !cylinder segments=segments start=x;-inner[1]/2;z end=x;inner[1]/2;z radius=radius
-        for y in (-1;1)*inner[1]/2
-            for z in (-1;1)*inner[2]/2
-                !cylinder segments=segments start=-inner[0]/2;y;z end=inner[0]/2;y;z radius=radius
+            if inner[2]
+                for y in (-1;1)*inner[1]/2 if inner[1] else 0
+                    !cylinder segments=segments start=x;y;-inner[2]/2 end=x;y;inner[2]/2 radius=radius
+                    for z in (-1;1)*inner[2]/2 if inner[2] else 0
+                        !sphere segments=segments position=x;y;z size=radius
+            if inner[1]
+                for z in (-1;1)*inner[2]/2 if inner[2] else 0
+                    !cylinder segments=segments start=x;-inner[1]/2;z end=x;inner[1]/2;z radius=radius
+        if inner[0]
+            for y in (-1;1)*inner[1]/2 if inner[1] else 0
+                for z in (-1;1)*inner[2]/2 if inner[2] else 0
+                    !cylinder segments=segments start=-inner[0]/2;y;z end=inner[0]/2;y;z radius=radius
 
 func toaster(_, bread=0, wings=0, bread_texture_id=null)
     let b=impulse(bread%1, 0.1)

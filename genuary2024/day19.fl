@@ -10,7 +10,7 @@
 -- off screen.
 --
 -- The direction and length of the cone follows the velocity of each particle
--- and the colour temperature scales with the speed. The first 100 particles
+-- and the colour temperature scales with the speed. The first 150 particles
 -- (which is as random as any other selection) are also lights to create some
 -- reflections on the surrounding particles.
 --
@@ -24,8 +24,8 @@
 import bloom_filter from '../common/filters.fl'
 
 let SIZE=RECORD or (1920;1080)
-    N=1500 if RECORD else 1000
-    LIGHTS=100 if RECORD else 100
+    N=1500
+    LIGHTS=150
 
 let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
     heading=normalize(sum($(:boid;i;:velocity) for i in ..N, 3))

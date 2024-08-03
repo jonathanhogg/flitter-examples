@@ -47,7 +47,7 @@ let SIZE=RECORD or 1080
         !light color=0.75 direction=1;0;0
         !material color=0.1
             !cylinder position=0;0;-0.5 size=500;500;1
-        !material color=1 transparency=0.99 shininess=300
+        !material color=1 transparency=0.99 roughness=0.36
             !transform translate=0;0;100
                 !cylinder position=0;0.1;0 size=TUBE;TUBE;200 invert=true
                 !cylinder size=TUBE+1;TUBE+1;200

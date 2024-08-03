@@ -36,7 +36,7 @@ let SIZE=RECORD or (1920;1080)
 let launch_times=accumulate(average_interval*2*beta(:interval)[..total_fireworks])
     active=(i if now > t and (now-t) < max_age) for i;t in zip(..total_fireworks, launch_times)
 
-!physics state=:firework dimensions=3 resolution=1/25
+!physics state=:firework dimensions=3 resolution=1/30
     for i in active
         let age=now-launch_times[i] speed=launch_speed*(0.75+0.5*beta(:speed)[i])
         !particle id=i radius=15 mass=10 position=(uniform(:pos;i)[..2]-0.5)*1k;25 velocity=(beta(:vel;i)[..2]-0.5;1)*speed
@@ -69,8 +69,8 @@ let launch_times=accumulate(average_interval*2*beta(:interval)[..total_fireworks
                     let age=now-launch_times[i] pos=$(:firework;i)
                     if age < fuse_time and pos
                         let vel=$(:firework;i;:velocity) speed=hypot(vel) dir=-vel/speed c=hsl(0.03;1;0.75-age/4)
-                        !transform translate=pos shininess=100
-                            !material color=1
+                        !transform translate=pos
+                            !material color=1 roughness=0.5
                                 !cone end=0 start=25*dir radius=5
                                 !cylinder start=25*dir end=50*dir radius=5
                             !sphere position=50*dir size=5 emissive=c*10
