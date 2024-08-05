@@ -26,14 +26,12 @@
 
 %pragma tempo 60
 
-import bloom_filter from '../common/filters.fl'
-
 let SIZE=RECORD or 1080
     M=20
     N=10k
 
 !window size=SIZE
-    @bloom_filter id=:top blursize=SIZE/2 radius=hypot(SIZE[..2])/200 exposure=-2
+    !bloom id=:top radius=hypot(SIZE[..2])/100
         !canvas3d samples=8 viewpoint=0;0;100 fov=40/360 rotate=beat/(30;20;15)
             !light color=1 direction=1;0;0
             !light color=1 direction=0;1;0
@@ -41,6 +39,6 @@ let SIZE=RECORD or 1080
             !material color=0.944;0.776;0.373 metal=1 roughness=.2
                 for i in ..N
                     !transform rotate_y=i/N translate=20;0;0 rotate_z=i*M/N
-                        !cone segments=3 flat=true position=7.5;0;0 size=2;2;3 rotation=-0.5/M+1/N;0;1/12
+                        !cone segments=3 flat=true position=7.5;0;0 size=3 rotation=-0.5/M+1/N;0;1/12
     !record filename=('day16.mp4' if RECORD) codec=:hevc crf=25 hidden=true
         !reference id=:top

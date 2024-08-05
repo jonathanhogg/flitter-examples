@@ -21,8 +21,6 @@
 
 %pragma tempo 60
 
-import bloom_filter from '../common/filters.fl'
-
 let SIZE=RECORD or (1920;1080)
     N=1500
     LIGHTS=150
@@ -47,7 +45,7 @@ let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
         !distance from=:middle to=i max=250
 
 !window size=SIZE
-    @bloom_filter id=:top radius=min(SIZE)//120 exposure=-1
+    !bloom id=:top radius=hypot(SIZE)/200
         !canvas3d samples=4 near=0.1 far=600 fog_max=600 max_lights=LIGHTS fov_ref=:narrow \
                   camera_id=(:outside;:outside;:mass_forward;:mass_back;:outside_wide;:boidseye)[beat//10%6]
             !camera id=:outside position=0;0;300 fov=90/360 focus=centre_of_mass/2

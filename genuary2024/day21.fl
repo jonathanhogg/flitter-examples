@@ -14,18 +14,15 @@
 
 %pragma tempo 60
 
-import bloom_filter from '../common/filters.fl'
-
 let SIZE=RECORD or 1080
     NLEGS=6
     NLIGHTS=24
     t=beat
 
-
 func saucer(_)
     !intersect
-        !sphere size=1 position=0;0;-0.9
-        !sphere size=1.5 position=0;0;1.4
+        !sphere segments=256 size=1 position=0;0;-0.9
+        !sphere segments=256 size=1.5 position=0;0;1.4
 
 func spar(_, position=0, size=1, end=1, holes=4)
     let length;width;height=size * (1;1;1)
@@ -69,7 +66,6 @@ func laser(_, power=0, rotation=0, elevation=0.125)
                     !cylinder start=0 end=0;0;-2000 radius=0.002 emissive=0;linear(power);0
                     !cylinder start=0 end=0;0;-2000 radius=0.005 emissive=power;0;0 transparency=0.5
 
-
 !window size=SIZE
     !bloom id=:top radius=SIZE[0]/108 exposure=-1
         !canvas3d viewpoint=0;0;500 far=2000 fov=30/360 samples=4 fog_min=500 fog_max=2000
@@ -79,7 +75,7 @@ func laser(_, power=0, rotation=0, elevation=0.125)
             !transform rotate=-0.25+sin(t/15)*0.05;sin(t/10)*0.03;-beat/30 scale=200
                 !material color=0.5 metal=true roughness=0.4
                     !union
-                        !sphere size=0.16;0.16;0.13 position=0;0;0.1
+                        !sphere segments=128 size=0.16;0.16;0.13 position=0;0;0.1
                         !transform translate=0;0;0.05
                             !difference
                                 @saucer

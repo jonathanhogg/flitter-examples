@@ -19,8 +19,6 @@
 
 %pragma tempo 60
 
-import bloom_filter from '../common/filters.fl'
-
 let SIZE=RECORD or (1920;1080)
     average_interval=1
     fuse_time=2
@@ -61,7 +59,7 @@ let launch_times=accumulate(average_interval*2*beta(:interval)[..total_fireworks
 
 !window size=SIZE colorbits=16
     !record filename=('day1.mp4' if RECORD) codec=:hevc crf=25
-        @bloom_filter radius=SIZE[0]/72
+        !bloom radius=SIZE[0]/72
             !canvas3d samples=4 viewpoint=0;-2k;200 focus=0;0;750 up=0;0;1 far=5k fov=60/360 fov_ref=:narrow \
                       fog_color=hsv(0.6;0.9;0.01) fog_min=2k fog_max=5k
                 !cylinder size=3k;3k;0.01 color=0.1

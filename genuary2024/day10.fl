@@ -20,8 +20,6 @@
 
 %pragma tempo 60
 
-import edge_detect from '../common/filters.fl'
-
 let SIZE=RECORD or 1080
     SCALE=hypot(SIZE[..2])/100
     RADIUS=hypot(SIZE[..2])/4
@@ -65,7 +63,7 @@ void main() {
     if (b - a > points[index0].w) {
         color = vec4(hsv2rgb(vec3(points[index0].z, 1.0, k)), 1.0);
     } else {
-        discard;
+        color = vec4(0.0);
     }
 }
 """
@@ -80,8 +78,8 @@ void main() {
         !distance from=:middle to=i max=RADIUS strength=50
 
 !window size=SIZE colorbits=16
-    !shader id=:top fragment=read('../glsl/color_adjust.frag') brightness=0.5 contrast=2
-        @edge_detect radius=SCALE/3
+    !adjust id=:top brightness=0.5 contrast=2
+        !edges radius=SCALE/3
             let points=($(:points;i);0.05+0.05*beta(:hue)[i];SCALE*1.5*beta(:line)[i]) for i in ..NPOINTS
             !shader fragment=VORONOI points=points
     !record filename=('day10.mp4' if RECORD and beat) codec=:hevc crf=29 hidden=true

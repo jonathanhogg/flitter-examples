@@ -35,8 +35,6 @@
 
 %pragma tempo 60
 
-import bloom_filter from '../common/filters.fl'
-
 let SIZE=RECORD or 1080
     NBLOBS=100
     NEUTRAL_DENSITY=1m
@@ -81,7 +79,7 @@ func blob_color(i)
             !camera id=:cam viewpoint=0;0;R*2
         for i in ..NBLOBS
             !sphere segments=32 position=$(:blob;i) size=blob_radius[i]+SMOOTHING
-    @bloom_filter id=:top blursize=SIZE/2 radius=SIZE[0]/108
+    !bloom id=:top radius=hypot(SIZE)/100
         !canvas3d samples=4 camera_id=:cam far=R*3 fov=0.2 fov_ref=:vertical fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_min=50 fog_max=R*3 max_lights=NBLOBS+1
             !transform rotate_y=beat/30
                 !camera id=:cam viewpoint=0;0;R*2

@@ -12,8 +12,6 @@
 -- Record a video with:
 -- flitter day8.fl --lockstep --runtime=30 --fps=30 --define 'RECORD=1080'
 
-import bloom_filter from '../common/filters.fl'
-
 let SIZE=RECORD or 1080
     SCALE=hypot(SIZE[..2])/2000
     POINTS=10k
@@ -25,7 +23,7 @@ let SIZE=RECORD or 1080
     PHASE=beat/60;0; 0;0.25
 
 !window size=SIZE colorbits=16
-    @bloom_filter radius=10*SCALE id=:top
+    !bloom radius=10*SCALE id=:top
         !canvas linear=true translate=SIZE/2 scale=SCALE antialias=RECORD composite=:add line_cap=:round
             for i in ..PATHS
                 let cycle=beat/(0.5+beta(:period)[i])+uniform(:phase)[i]
