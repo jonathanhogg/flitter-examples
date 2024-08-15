@@ -7,6 +7,7 @@ in vec3 world_position;
 
 out vec4 fragment_color;
 
+uniform float far;
 uniform vec3 view_position;
 uniform vec3 view_focus;
 uniform bool orthographic;
@@ -18,5 +19,5 @@ void main() {
     } else {
         view_distance = length(view_position - world_position);
     }
-    fragment_color = vec4(view_distance, 0.0, 0.0, 1.0);
+    fragment_color = vec4(far-view_distance, view_distance, 0.0, 1.0);
 }

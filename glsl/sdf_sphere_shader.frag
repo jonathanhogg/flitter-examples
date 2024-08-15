@@ -12,11 +12,9 @@ ${HEADER}
 const vec3 greyscale = vec3(0.299, 0.587, 0.114);
 
 in vec3 world_position;
-in vec3 world_normal;
-in vec2 texture_uv;
+in vec2 coord;
 
 flat in vec4 fragment_albedo;
-flat in vec3 fragment_emissive;
 flat in vec4 fragment_properties;
 
 out vec4 fragment_color;
@@ -34,6 +32,7 @@ uniform float fog_max;
 uniform float fog_min;
 uniform vec3 fog_color;
 uniform float fog_curve;
+uniform mat4 pv_matrix;
 
 // These should be provided as attributes to the render `!group`. Note that
 // these values can be compiled into the code as constants if they are unlikely
@@ -42,19 +41,17 @@ uniform float fog_curve;
 const int NSPHERES = ${NSPHERES};
 const float far = ${float(far)};
 const float smoothing = ${float(smoothing)};
-const int max_iterations = ${max_iterations};
-const float normal_delta = ${float(normal_delta)};
+const int max_iterations = ${int(max_iterations)};
 const float epsilon = ${float(epsilon)};
 uniform vec3 sphere_positions[NSPHERES];
 uniform vec3 sphere_colors[NSPHERES];
 uniform float sphere_radii[NSPHERES];
-uniform sampler2D depth_buffer;
-uniform mat4 pv_matrix;
+uniform sampler2D distance_buffer;
 
 // Basic ray-marching SDF implementation:
 
 const float INFINITY = 1.0 / 0.0;
-vec2 NORMAL = vec2(normal_delta, 0.0);
+const vec2 NORMAL_DELTA = vec2(${float(normal_delta)}, 0.0);
 
 struct Trace {
     float d;
@@ -118,8 +115,8 @@ Trace ray_march(vec3 origin, vec3 direction, float max_distance) {
     vec4 rgbd = scene_sdf_rgb(p);
     d += rgbd.a;
     p = origin + d * direction;
-    vec3 d1 = vec3(scene_sdf(p + NORMAL.xyy), scene_sdf(p + NORMAL.yxy), scene_sdf(p + NORMAL.yyx)),
-         d2 = vec3(scene_sdf(p - NORMAL.xyy), scene_sdf(p - NORMAL.yxy), scene_sdf(p - NORMAL.yyx));
+    vec3 d1 = vec3(scene_sdf(p + NORMAL_DELTA.xyy), scene_sdf(p + NORMAL_DELTA.yxy), scene_sdf(p + NORMAL_DELTA.yyx)),
+         d2 = vec3(scene_sdf(p - NORMAL_DELTA.xyy), scene_sdf(p - NORMAL_DELTA.yxy), scene_sdf(p - NORMAL_DELTA.yyx));
     return Trace(d, rgbd.rgb, normalize(d1 - d2));
 }
 
@@ -147,22 +144,31 @@ void main() {
     // its Z for the depth buffer. Effectively we treat the rendered volumes
     // as pocket universes that contain the SDF scene.
 
-    // Do a test against our pre-calculated depth buffer to see if this is an
-    // overdrawn fragment that can be ignored:
-    vec4 position = pv_matrix * vec4(world_position, 1);
-    vec2 coord = (position.xy / position.w + 1.0) / 2.0;
-    vec4 depth = texture(depth_buffer, coord);
-    if (depth.a == 1.0 && view_distance > depth.r + epsilon) {
-        fragment_color = vec4(0.0);
+    // Extract the distance to the nearest front and furthest back faces of the
+    // rendered volumes along this ray from the pre-calculated distance buffer.
+    // We nope-out if this sample is not valid, which may occur at the very
+    // edges of the rendered area.
+    vec4 depth = texture(distance_buffer, coord);
+    if (depth.a != 1.0) {
+        fragment_color = vec4(0.0, 1.0, 0.0, 1.0);
         return;
+        // discard;
+    }
+    float front_distance = far - depth.r;
+    float back_distance = depth.g;
+
+    // If the starting point is beyond the front then it is an overdrawn
+    // fragment and can be ignored.
+    if (view_distance > front_distance + epsilon) {
+        discard;
     }
 
     // Ray-march to find the actual position, normal and emissive colour of this
-    // fragment:
-    Trace trace = ray_march(world_position, -V, far-view_distance);
+    // fragment. Use the pre-calculated back distance to limit how far we should
+    // march before giving up.
+    Trace trace = ray_march(world_position, -V, back_distance-view_distance);
     if (isinf(trace.d)) {
-        fragment_color = vec4(0.0);
-        return;
+        discard;
     }
     vec3 emissive = trace.c;
     vec3 N = trace.n;
@@ -174,12 +180,10 @@ void main() {
 
     float fog_alpha = (fog_max > fog_min) && (fog_curve > 0.0) ? pow(clamp((view_distance - fog_min) / (fog_max - fog_min), 0.0, 1.0), 1.0 / fog_curve) : 0.0;
     if (fog_alpha == 1.0) {
-        fragment_color = vec4(0.0);
-        return;
+        discard;
     }
     vec3 albedo = fragment_albedo.rgb;
     float transparency = fragment_albedo.a;
-    // vec3 emissive = fragment_emissive;
     float ior = fragment_properties.x;
     float metal = fragment_properties.y;
     float roughness = fragment_properties.z;
@@ -187,7 +191,6 @@ void main() {
 
     vec3 diffuse_color = vec3(0.0);
     vec3 specular_color = emissive;
-    // vec3 N = normalize(world_normal);
     float rf0 = (ior - 1.0) / (ior + 1.0);
     vec3 F0 = mix(vec3(rf0*rf0), albedo, metal);
     float a = roughness * roughness;
@@ -302,4 +305,6 @@ void main() {
         final_color = vec3(grey);
     }
     fragment_color = vec4(final_color * tint, opacity);
+    vec4 p = pv_matrix * vec4(world_pos, 1);
+    gl_FragDepth = gl_DepthRange.diff * (p.z / p.w + 1.0) * 0.5 + gl_DepthRange.near;
 }

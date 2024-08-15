@@ -10,21 +10,36 @@
 -- nearer to the bottom or top of the sphere. The blobs have an adhesion force
 -- that make them tend to loosely clump together, some slight Brownian motion
 -- randomness, buoyancy and drag complete the simulation. The buoyancy is
--- controller by keeping the mass of the particles the same and varying the
--- radius according to the temperature so that they change density.
+-- controlled by keeping the mass of the particles the same and varying the
+-- radius according to the temperature so that they change density. An anchored
+-- central particle with a large radius forms an obstacle that the other
+-- particles must move around.
 --
 -- A group is constructed containing oversized spheres around each of the blobs
 -- and this is rendered with a custom SDF shader. The shader takes the
 -- positions, radii and colours of the blobs as input and raymarches through
 -- the shaded fragment in the opposite direction to the camera. If the
 -- raymarcher gets a hit with the SDF then it returns the calculated colour at
--- that point using the same PBR algorithm as the normal Flitter one.
+-- that point using the same PBR algorithm as the normal Flitter one, and sets
+-- the fragment depth to the actual depth of the SDF surface. Any ray that
+-- doesn't hit an SDF surface is discarded.
 --
--- The end result is that the interior SDF scene is "painted" onto the surface
--- of the containing spheres. Rendering only the containing spheres allows us
--- to skip running the raymarching algorithm for empty areas of the window,
--- while the usual Flitter depth-ordered rendering allows us to keep the amount
--- of over-rendered pixels reasonably low.
+-- To limit the amount of calculation that has to be done, we do an initial
+-- pass rendering all faces of the oversize spheres from the same camera angle
+-- with a different custom shader that records the minimum and maximum depth.
+-- We pass this texture into the SDF shader. It can use this to only raymarch
+-- each ray once, beginning at the near surface of the render volume and
+-- stopping at the far side.
+--
+-- The end result is that the SDF scene is rendered within the containing
+-- spheres in a depth-accurate way. We demonstrate the latter by rendering a
+-- green sphere in the same scene - representing the central anchored obstacle
+-- in the physics system - using the normal lighting shader. The depth buffer
+-- ensures that the SDF blobs and the green sphere correctly overlap each other.
+--
+-- We construct sphere lights in the same location as each of the blobs and
+-- place these into the scene. These lights affect the SDF surfaces as well as
+-- the green sphere.
 --
 -- I hope you have a good GPU.
 --
@@ -68,33 +83,36 @@ func blob_color(i)
     !buoyancy gravity=0;-100;0 density=NEUTRAL_DENSITY
     !random strength=0.5
     !drag strength=2m
-    !anchor id=:middle
+    !anchor id=:middle radius=R/2
     for i in ..NBLOBS
         !particle id=i radius=blob_radius[i] mass=blob_mass[i] position=normal(:pos;i)[..3]*R/5
         !distance from=:middle to=i max=R strength=10
 
 !window size=SIZE
-    !canvas3d id=:depth_buffer colorbits=32 hidden=true camera_id=:cam far=R*3 fov=0.2 fov_ref=:vertical composite=:source fragment=read('../glsl/depth_shader.frag')
+    !canvas3d id=:distance_buffer colorbits=32 hidden=true camera_id=:cam near=1 far=R*3 fov=0.2 fov_ref=:vertical \
+              depth_test=false face_cull=false composite=:lighten fragment=read('../glsl/distance_shader.frag')
         !transform rotate_y=beat/30
             !camera id=:cam viewpoint=0;0;R*2
         for i in ..NBLOBS
-            !sphere segments=32 position=$(:blob;i) size=blob_radius[i]+SMOOTHING
-    !bloom id=:top radius=hypot(SIZE)/100
-        !canvas3d samples=4 camera_id=:cam far=R*3 fov=0.2 fov_ref=:vertical fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_min=50 fog_max=R*3 max_lights=NBLOBS+1
+            !sphere position=$(:blob;i) size=blob_radius[i]+SMOOTHING
+    !bloom id=:top radius=hypot(SIZE)/50
+        !canvas3d camera_id=:cam near=1 far=R*3 fov=0.2 fov_ref=:vertical fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_min=R fog_max=R*3 max_lights=NBLOBS+1
             !transform rotate_y=beat/30
                 !camera id=:cam viewpoint=0;0;R*2
-            !light color=colortemp(LAMP_TEMPERATURE)*50 direction=0;1;0
-            !material roughness=0.3 color=0.5 metal=true
-                !group fragment=read('../glsl/sdf_sphere_shader.frag') \
-                       vertex=read('../glsl/sdf_sphere_shader.vert') \
-                       NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=50 normal_delta=0.1 epsilon=0.05 far=R*3 \
-                       sphere_positions=($(:blob;i) for i in ..NBLOBS) \
-                       sphere_colors=(blob_color(i) for i in ..NBLOBS) \
-                       sphere_radii=blob_radius \
-                       depth_buffer=:depth_buffer
+            !light color=colortemp(LAMP_TEMPERATURE)*10 direction=0;1;0
+            for i in ..NBLOBS
+                !light position=$(:blob;i) radius=blob_radius[i] color=2*blob_color(i)*blob_area[i]
+            !material color=0;1;0 roughness=0.5
+                !sphere size=R/2
+            !group fragment=read('../glsl/sdf_sphere_shader.frag') \
+                   vertex=read('../glsl/sdf_sphere_shader.vert') \
+                   NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=50 normal_delta=R/100 epsilon=R/100 far=R*3 \
+                   sphere_positions=($(:blob;i) for i in ..NBLOBS) \
+                   sphere_colors=(blob_color(i) for i in ..NBLOBS) \
+                   sphere_radii=blob_radius \
+                   distance_buffer=:distance_buffer
+                !material roughness=0.4 color=0.5 metal=true
                     for i in ..NBLOBS
-                        !transform translate=$(:blob;i)
-                            !sphere segments=32 size=blob_radius[i]+SMOOTHING
-                            !light position=0 radius=blob_radius[i] color=blob_color(i)*blob_area[i]
+                        !sphere position=$(:blob;i) size=blob_radius[i]+SMOOTHING
     !record filename=('day29.mp4' if RECORD and t > 60) codec=:hevc crf=25 hidden=true
         !reference id=:top
