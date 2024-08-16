@@ -13,57 +13,51 @@
 -- controlled by keeping the mass of the particles the same and varying the
 -- radius according to the temperature so that they change density. An anchored
 -- central particle with a large radius forms an obstacle that the other
--- particles must move around.
+-- particles must move around. We define sphere lights in the same location as
+-- each of the blobs, with the same radii and colours.
 --
--- A group is constructed containing oversized spheres around each of the blobs
--- and this is rendered with a custom SDF shader. The shader takes the
--- positions, radii and colours of the blobs as input and raymarches through
--- the shaded fragment in the opposite direction to the camera. If the
--- raymarcher gets a hit with the SDF then it returns the calculated colour at
--- that point using the same PBR algorithm as the normal Flitter one, and sets
--- the fragment depth to the actual depth of the SDF surface. Any ray that
--- doesn't hit an SDF surface is discarded.
+-- The SDF universe is rendered "inside" a single containing sphere. We render
+-- this sphere using the special SDF shader. The SDF shader takes the position,
+-- radius and emissive color of all of the spheres as array uniforms, and takes
+-- the remainder of the material properties from the container sphere.
 --
--- To limit the amount of calculation that has to be done, we do an initial
--- pass rendering all faces of the oversize spheres from the same camera angle
--- with a different custom shader that records the minimum and maximum depth.
--- We pass this texture into the SDF shader. It can use this to only raymarch
--- each ray once, beginning at the near surface of the render volume and
--- stopping at the far side.
+-- The SDF shader raymarches through the contained volume and either returns a
+-- fragment color and appropriate fragment depth for the intersected SDF
+-- surface, or discards the fragment. As the SDF shader updates the depth
+-- buffer with the apparent depth, we are able to merge the SDF universe in
+-- with the normal mesh universe rendered with the standard lighting shader.
 --
--- The end result is that the SDF scene is rendered within the containing
--- spheres in a depth-accurate way. We demonstrate the latter by rendering a
--- green sphere in the same scene - representing the central anchored obstacle
--- in the physics system - using the normal lighting shader. The depth buffer
--- ensures that the SDF blobs and the green sphere correctly overlap each other.
---
--- We construct sphere lights in the same location as each of the blobs and
--- place these into the scene. These lights affect the SDF surfaces as well as
--- the green sphere.
+-- Hold down the space key to paint the container with colors representing the
+-- computational cost of the raymarcher: red for iterations, green for the
+-- number of spheres considered on each iteration, and blue for the product of
+-- the two. The lighter the area, the more costly it was to render.
 --
 -- I hope you have a good GPU.
 --
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day29.fl --lockstep --runtime=180 --define 'RECORD=1080'
+-- flitter day29.fl --lockstep --runtime=125 --define 'RECORD=1080'
 
 %pragma tempo 60
 
 let SIZE=RECORD or 1080
-    NBLOBS=100
+    NBLOBS=125
+    BLOB_TOTAL_MASS=50
     NEUTRAL_DENSITY=1m
     NEUTRAL_TEMPERATURE=1500
     THERMAL_CONDUCTIVITY=0.3m
     LAMP_TEMPERATURE=3000
     THERMAL_GRADIENT=-2000
     THERMAL_CURVE=2
-    SMOOTHING=10
-    R=80
+    SMOOTHING=15
+    R=100
+    BALL_RADIUS=R/2
 
 let t=$(:blob;:clock) or 0
-    blob_start_temp=NEUTRAL_TEMPERATURE+100*normal(:radius)[..NBLOBS]
-    blob_mass=0.05+uniform(:mass)[..NBLOBS]**3*0.95
+    blob_start_temp=NEUTRAL_TEMPERATURE+100*normal(:temp)[..NBLOBS]
+    blob_relative_mass=1+beta(:mass)[..NBLOBS]*100
+    blob_mass=BLOB_TOTAL_MASS*blob_relative_mass/sum(blob_relative_mass)
     blob_height=$(:blob;i)[1] for i in ..NBLOBS
     lamp_radiant_temperature=LAMP_TEMPERATURE+(1-((R-blob_height)/(R*2))**THERMAL_CURVE)*THERMAL_GRADIENT
     blob_temperature=$(:temperature) or blob_start_temp
@@ -74,7 +68,7 @@ let t=$(:blob;:clock) or 0
     rate_of_temperature_change=THERMAL_CONDUCTIVITY*(lamp_radiant_temperature-temp)/blob_mass*blob_area
 
 func blob_color(i)
-    colortemp(blob_temperature[i])*300
+    colortemp(blob_temperature[i])*500
 
 !counter state=:temperature initial=blob_start_temp time=t rate=rate_of_temperature_change minimum=1 maximum=LAMP_TEMPERATURE
 
@@ -83,36 +77,28 @@ func blob_color(i)
     !buoyancy gravity=0;-100;0 density=NEUTRAL_DENSITY
     !random strength=0.5
     !drag strength=2m
-    !anchor id=:middle radius=R/2
+    !anchor id=:middle radius=BALL_RADIUS
     for i in ..NBLOBS
-        !particle id=i radius=blob_radius[i] mass=blob_mass[i] position=normal(:pos;i)[..3]*R/5
-        !distance from=:middle to=i max=R strength=10
+        !particle id=i position=(beta(:pos;i)[..3]-0.5)*R mass=blob_mass[i] radius=blob_radius[i]
+        !distance from=:middle to=i strength=10 max=R-blob_radius[i]
 
 !window size=SIZE
-    !canvas3d id=:distance_buffer colorbits=32 hidden=true camera_id=:cam near=1 far=R*3 fov=0.2 fov_ref=:vertical \
-              depth_test=false face_cull=false composite=:lighten fragment=read('../glsl/distance_shader.frag')
-        !transform rotate_y=beat/30
-            !camera id=:cam viewpoint=0;0;R*2
-        for i in ..NBLOBS
-            !sphere position=$(:blob;i) size=blob_radius[i]+SMOOTHING
     !bloom id=:top radius=hypot(SIZE)/50
-        !canvas3d camera_id=:cam near=1 far=R*3 fov=0.2 fov_ref=:vertical fog_curve=2 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_min=R fog_max=R*3 max_lights=NBLOBS+1
+        !canvas3d camera_id=:cam near=0.1 far=R*3 fov=0.2 fov_ref=:vertical fog_curve=3 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_min=R fog_max=R*3 max_lights=NBLOBS+1
             !transform rotate_y=beat/30
-                !camera id=:cam viewpoint=0;0;R*2
-            !light color=colortemp(LAMP_TEMPERATURE)*10 direction=0;1;0
+                !camera id=:cam position=0;0;R*2
+            !light color=colortemp(LAMP_TEMPERATURE)*3M position=0;-R*3;0 direction=0;1;0 outer=0.125
             for i in ..NBLOBS
-                !light position=$(:blob;i) radius=blob_radius[i] color=2*blob_color(i)*blob_area[i]
+                !light position=$(:blob;i) radius=blob_radius[i] color=blob_color(i)*blob_area[i]
             !material color=0;1;0 roughness=0.5
-                !sphere size=R/2
-            !group fragment=read('../glsl/sdf_sphere_shader.frag') \
-                   vertex=read('../glsl/sdf_sphere_shader.vert') \
-                   NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=50 normal_delta=R/100 epsilon=R/100 far=R*3 \
+                !sphere size=BALL_RADIUS
+            !group fragment=read('../glsl/sdf_sphere_shader.frag') vertex=read('../glsl/sdf_sphere_shader.vert') show_cost=$(:show_cost) \
+                   NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=100 normal_delta=R/100 epsilon=R/1000 far=R*3 \
                    sphere_positions=($(:blob;i) for i in ..NBLOBS) \
                    sphere_colors=(blob_color(i) for i in ..NBLOBS) \
-                   sphere_radii=blob_radius \
-                   distance_buffer=:distance_buffer
+                   sphere_radii=blob_radius
                 !material roughness=0.4 color=0.5 metal=true
-                    for i in ..NBLOBS
-                        !sphere position=$(:blob;i) size=blob_radius[i]+SMOOTHING
-    !record filename=('day29.mp4' if RECORD and t > 60) codec=:hevc crf=25 hidden=true
+                    !sphere size=R*1.25
+    !record filename=('day29.mp4' if RECORD and beat >= 5) codec=:hevc crf=25 hidden=true
         !reference id=:top
+    !key name=:space state=:show_cost

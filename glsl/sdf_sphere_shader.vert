@@ -18,8 +18,8 @@ flat out vec4 fragment_properties;
 uniform mat4 pv_matrix;
 
 void main() {
-    world_position = (model_matrix * vec4(model_position, 1)).xyz;
-    gl_Position = pv_matrix * vec4(world_position, 1);
+    world_position = (model_matrix * vec4(model_position, 1.0)).xyz;
+    gl_Position = pv_matrix * vec4(world_position, 1.0);
     coord = (gl_Position.xy / gl_Position.w + 1.0) / 2.0;
     fragment_albedo = material_albedo;
     fragment_properties = material_properties;

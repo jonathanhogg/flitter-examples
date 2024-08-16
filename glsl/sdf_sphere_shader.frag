@@ -46,9 +46,11 @@ const float epsilon = ${float(epsilon)};
 uniform vec3 sphere_positions[NSPHERES];
 uniform vec3 sphere_colors[NSPHERES];
 uniform float sphere_radii[NSPHERES];
-uniform sampler2D distance_buffer;
 
 // Basic ray-marching SDF implementation:
+
+int start_sphere, end_sphere;
+bool sphere_include[NSPHERES];
 
 const float INFINITY = 1.0 / 0.0;
 const vec2 NORMAL_DELTA = vec2(${float(normal_delta)}, 0.0);
@@ -57,19 +59,24 @@ struct Trace {
     float d;
     vec3 c;
     vec3 n;
+    int i;
 };
 
 // We have a signed distance function that does only distance calculations...
 //
 float scene_sdf(vec3 point) {
-    float d = length(point - sphere_positions[0]) - sphere_radii[0];
-    for (int i = 1; i < NSPHERES; i++) {
-        float sd = length(point - sphere_positions[i]) - sphere_radii[i];
-        if (smoothing > 0.0) {
-            float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0.0, 1.0);
-            d = mix(sd, d, h) - smoothing*h*(1.0-h);
-        } else if (sd < d) {
-            d = sd;
+    float d = INFINITY;
+    for (int i = start_sphere; i < end_sphere; i++) {
+        if (sphere_include[i]) {
+            float sd = length(point - sphere_positions[i]) - sphere_radii[i];
+            if (isinf(d)) {
+                d = sd;
+            } else if (smoothing > 0.0) {
+                float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0.0, 1.0);
+                d = mix(sd, d, h) - smoothing*h*(1.0-h);
+            } else if (sd < d) {
+                d = sd;
+            }
         }
     }
     return d;
@@ -78,46 +85,50 @@ float scene_sdf(vec3 point) {
 // ...and one that also calculates the color.
 //
 vec4 scene_sdf_rgb(vec3 point) {
-    float d = length(point - sphere_positions[0]) - sphere_radii[0];
-    vec3 rgb = sphere_colors[0];
-    for (int i = 1; i < NSPHERES; i++) {
-        float sd = length(point - sphere_positions[i]) - sphere_radii[i];
-        if (smoothing > 0.0) {
-            float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0.0, 1.0);
-            d = mix(sd, d, h) - smoothing*h*(1.0-h);
-            rgb = mix(sphere_colors[i], rgb, h);
-        } else if (sd < d) {
-            d = sd;
-            rgb = sphere_colors[i];
+    float d = INFINITY;
+    vec3 rgb = vec3(0.0);
+    for (int i = start_sphere; i < end_sphere; i++) {
+        if (sphere_include[i]) {
+            float sd = length(point - sphere_positions[i]) - sphere_radii[i];
+            if (isinf(d)) {
+                d = sd;
+                rgb = sphere_colors[i];
+            } else if (smoothing > 0.0) {
+                float h = clamp(0.5 + 0.5*(sd-d)/smoothing, 0.0, 1.0);
+                d = mix(sd, d, h) - smoothing*h*(1.0-h);
+                rgb = mix(sphere_colors[i], rgb, h);
+            } else if (sd < d) {
+                d = sd;
+                rgb = sphere_colors[i];
+            }
         }
     }
     return vec4(rgb, d);
 }
 
 // Our ray marcher does standard spherical marching using the distance-only
-// function first and then does one more iteration with the color function
+// function start_sphere and then does one more iteration with the color function
 // and 6 more calls to the distance function to calculate a surface normal.
 //
 Trace ray_march(vec3 origin, vec3 direction, float max_distance) {
+    int i = 1;
     vec3 p = origin;
     float d = 0.0;
-    for (int i = 1; i < max_iterations; i++) {
-        float delta = scene_sdf(p);
+    float delta = INFINITY;
+    for (; i < max_iterations && abs(delta) > epsilon; i++) {
+        delta = scene_sdf(p);
         d += delta;
         if (d > max_distance) {
-            return Trace(INFINITY, vec3(0.0), vec3(0.0));
+            return Trace(INFINITY, vec3(0.0), vec3(0.0), i);
         }
         p = origin + d * direction;
-        if (abs(delta) < epsilon) {
-            break;
-        }
     }
     vec4 rgbd = scene_sdf_rgb(p);
     d += rgbd.a;
     p = origin + d * direction;
     vec3 d1 = vec3(scene_sdf(p + NORMAL_DELTA.xyy), scene_sdf(p + NORMAL_DELTA.yxy), scene_sdf(p + NORMAL_DELTA.yyx)),
          d2 = vec3(scene_sdf(p - NORMAL_DELTA.xyy), scene_sdf(p - NORMAL_DELTA.yxy), scene_sdf(p - NORMAL_DELTA.yyx));
-    return Trace(d, rgbd.rgb, normalize(d1 - d2));
+    return Trace(d, rgbd.rgb, normalize(d1 - d2), i);
 }
 
 
@@ -135,38 +146,46 @@ void main() {
 
     // This is the additional SDF bit.
     //
-    // We ray-march backwards from the fragment in the view direction to find
-    // an intersection with the SDF scene. If there is no hit then we exit
-    // immediately with transparent as the fragment colour. Otherwise we use
-    // the normal lighting calculation with the world position, normal and
-    // emissive colour derived from the SDF functions. Note that we are still
-    // colouring the surface fragment of the render triangular mesh and using
-    // its Z for the depth buffer. Effectively we treat the rendered volumes
-    // as pocket universes that contain the SDF scene.
+    // We ray-march from the container fragment position away from the viewer
+    // to find an intersection with the SDF scene. If there is no hit then we
+    // discard this fragment. Otherwise we use the normal lighting calculation
+    // with a new world position, normal and emissive colour derived from the
+    // SDF functions, and update the fragment depth to match the SDF surface
+    // depth.
 
-    // Extract the distance to the nearest front and furthest back faces of the
-    // rendered volumes along this ray from the pre-calculated distance buffer.
-    // We nope-out if this sample is not valid, which may occur at the very
-    // edges of the rendered area.
-    vec4 depth = texture(distance_buffer, coord);
-    if (depth.a != 1.0) {
-        fragment_color = vec4(0.0, 1.0, 0.0, 1.0);
-        return;
-        // discard;
-    }
-    float front_distance = far - depth.r;
-    float back_distance = depth.g;
-
-    // If the starting point is beyond the front then it is an overdrawn
-    // fragment and can be ignored.
-    if (view_distance > front_distance + epsilon) {
-        discard;
+    // We do a quick pass through all the spheres first doing a ray/sphere
+    // intersection, with the spheres expanded by 1.5x the smoothing amount to
+    // account for how much they can be distorted by the smoothing logic. This
+    // gives us a set of possible spheres that this ray may intersect with. If
+    // there are none then we can immediately discard this fragment.
+    //
+    int sphere_count = 0;
+    start_sphere = -1;
+    end_sphere = 0;
+    for (int i = 0; i < NSPHERES; i++) {
+        vec3 p = sphere_positions[i] - world_position;
+        float d = dot(-V, p);
+        if (d > 0.0 && d < far && length(p + d * V) < (sphere_radii[i] + smoothing*1.5)) {
+            sphere_include[i] = true;
+            if (start_sphere == -1) {
+                start_sphere = i;
+            }
+            end_sphere = i + 1;
+            sphere_count++;
+        } else {
+            sphere_include[i] = false;
+        }
     }
 
     // Ray-march to find the actual position, normal and emissive colour of this
-    // fragment. Use the pre-calculated back distance to limit how far we should
-    // march before giving up.
-    Trace trace = ray_march(world_position, -V, back_distance-view_distance);
+    // fragment.
+    //
+    Trace trace = ray_march(world_position, -V, far-view_distance);
+% if show_cost:
+    float r = float(trace.i) / float(max_iterations);
+    float g = float(sphere_count) / float(NSPHERES);
+    fragment_color = vec4(r, g, r*g, 1.0);
+% else:
     if (isinf(trace.d)) {
         discard;
     }
@@ -177,18 +196,14 @@ void main() {
 
     // The rest of the material properties and lighting calculation is done
     // as per usual.
-
-    float fog_alpha = (fog_max > fog_min) && (fog_curve > 0.0) ? pow(clamp((view_distance - fog_min) / (fog_max - fog_min), 0.0, 1.0), 1.0 / fog_curve) : 0.0;
-    if (fog_alpha == 1.0) {
-        discard;
-    }
+    //
+    float fog_alpha = (fog_max > fog_min) && (fog_curve > 0.0) ? pow(clamp((view_distance - fog_min) / (fog_max - fog_min), 0.0, 1.0), 1.0/fog_curve) : 0.0;
     vec3 albedo = fragment_albedo.rgb;
     float transparency = fragment_albedo.a;
     float ior = fragment_properties.x;
     float metal = fragment_properties.y;
     float roughness = fragment_properties.z;
-    float occlusion = fragment_properties.z;
-
+    float occlusion = fragment_properties.w;
     vec3 diffuse_color = vec3(0.0);
     vec3 specular_color = emissive;
     float rf0 = (ior - 1.0) / (ior + 1.0);
@@ -217,11 +232,12 @@ void main() {
                     passes = 2;
                     attenuation = clamp(1.0 - (light_radius / light_distance), 0.0, 1.0);
                     if (pass == 0) {
-                        light_distance = max(0.0, light_distance - light_radius*0.99);
+                        light_distance -= min(light_radius, light_distance*0.99);
                     } else {
                         vec3 R = reflect(V, N);
                         vec3 l = dot(L, R) * R - L;
                         L += l * min(0.99, light_radius/length(l));
+                        light_distance = length(L);
                     }
                 }
                 L = normalize(L);
@@ -305,6 +321,10 @@ void main() {
         final_color = vec3(grey);
     }
     fragment_color = vec4(final_color * tint, opacity);
+
+    // Update the fragment depth from the position of the SDF surface.
+    //
     vec4 p = pv_matrix * vec4(world_pos, 1);
     gl_FragDepth = gl_DepthRange.diff * (p.z / p.w + 1.0) * 0.5 + gl_DepthRange.near;
+% endif
 }
