@@ -4,7 +4,7 @@ ${HEADER}
 // SDF sphere-rendering capability hacked in and texture-mapping support
 // removed. It will render the spheres specified by the `sphere_positions`,
 // `sphere_radii` and `sphere_colors` uniforms. `smoothing` controls the use of
-// smooth unioning of the spheres. `far` controls the maximum ray distance.
+// smooth unioning of the spheres.
 //
 // Copyright 2024 by Jonathan Hogg and licensed under the original Flitter
 // BSD 2-clause license https://github.com/jonathanhogg/flitter/blob/main/LICENSE
@@ -39,7 +39,6 @@ uniform mat4 pv_matrix;
 // to change or passed in as uniforms otherwise.
 //
 const int NSPHERES = ${NSPHERES};
-const float far = ${float(far)};
 const float smoothing = ${float(smoothing)};
 const int max_iterations = ${int(max_iterations)};
 const float epsilon = ${float(epsilon)};
@@ -111,6 +110,9 @@ vec4 scene_sdf_rgb(vec3 point) {
 // and 6 more calls to the distance function to calculate a surface normal.
 //
 Trace ray_march(vec3 origin, vec3 direction, float max_distance) {
+    if (max_distance == 0.0) {
+        return Trace(INFINITY, vec3(0.0), vec3(0.0), 0);
+    }
     int i = 1;
     vec3 p = origin;
     float d = 0.0;
@@ -156,16 +158,21 @@ void main() {
     // We do a quick pass through all the spheres first doing a ray/sphere
     // intersection, with the spheres expanded by 1.5x the smoothing amount to
     // account for how much they can be distorted by the smoothing logic. This
-    // gives us a set of possible spheres that this ray may intersect with. If
-    // there are none then we can immediately discard this fragment.
+    // gives us a set of possible spheres that this ray may intersect with. At
+    // the same time we work out (conservative) bounds for the minimum and
+    // maximum distance that an intersection could occur at, this allows us to
+    // start and stop the raymarcher at those distances.
     //
     int sphere_count = 0;
     start_sphere = -1;
     end_sphere = 0;
+    float max_distance = 0;
     for (int i = 0; i < NSPHERES; i++) {
         vec3 p = sphere_positions[i] - world_position;
         float d = dot(-V, p);
-        if (d > 0.0 && d < far && length(p + d * V) < (sphere_radii[i] + smoothing*1.5)) {
+        float r = sphere_radii[i] + smoothing*1.5;
+        if (length(p + d * V) < r) {
+            max_distance = max(max_distance, d);
             sphere_include[i] = true;
             if (start_sphere == -1) {
                 start_sphere = i;
@@ -180,11 +187,11 @@ void main() {
     // Ray-march to find the actual position, normal and emissive colour of this
     // fragment.
     //
-    Trace trace = ray_march(world_position, -V, far-view_distance);
+    Trace trace = ray_march(world_position, -V, max_distance);
 % if show_cost:
-    float r = float(trace.i) / float(max_iterations);
-    float g = float(sphere_count) / float(NSPHERES);
-    fragment_color = vec4(r, g, r*g, 1.0);
+    float a = float(trace.i) / float(max_iterations);
+    float b = float(sphere_count) / float(NSPHERES);
+    fragment_color = vec4(a, a*b, b, 1.0);
 % else:
     if (isinf(trace.d)) {
         discard;

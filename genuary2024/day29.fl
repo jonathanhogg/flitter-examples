@@ -28,8 +28,8 @@
 -- with the normal mesh universe rendered with the standard lighting shader.
 --
 -- Hold down the space key to paint the container with colors representing the
--- computational cost of the raymarcher: red for iterations, green for the
--- number of spheres considered on each iteration, and blue for the product of
+-- computational cost of the raymarcher: red for iterations, blue for the
+-- number of spheres considered on each iteration, and green for the product of
 -- the two. The lighter the area, the more costly it was to render.
 --
 -- I hope you have a good GPU.
@@ -42,7 +42,7 @@
 %pragma tempo 60
 
 let SIZE=RECORD or 1080
-    NBLOBS=125
+    NBLOBS=150
     BLOB_TOTAL_MASS=50
     NEUTRAL_DENSITY=1m
     NEUTRAL_TEMPERATURE=1500
@@ -68,7 +68,7 @@ let t=$(:blob;:clock) or 0
     rate_of_temperature_change=THERMAL_CONDUCTIVITY*(lamp_radiant_temperature-temp)/blob_mass*blob_area
 
 func blob_color(i)
-    colortemp(blob_temperature[i])*500
+    colortemp(blob_temperature[i])*750
 
 !counter state=:temperature initial=blob_start_temp time=t rate=rate_of_temperature_change minimum=1 maximum=LAMP_TEMPERATURE
 
@@ -87,18 +87,19 @@ func blob_color(i)
         !canvas3d camera_id=:cam near=0.1 far=R*3 fov=0.2 fov_ref=:vertical fog_curve=3 fog_color=colortemp(NEUTRAL_TEMPERATURE) fog_min=R fog_max=R*3 max_lights=NBLOBS+1
             !transform rotate_y=beat/30
                 !camera id=:cam position=0;0;R*2
-            !light color=colortemp(LAMP_TEMPERATURE)*3M position=0;-R*3;0 direction=0;1;0 outer=0.125
+            !light color=colortemp(LAMP_TEMPERATURE)*1M position=0;-R*3;0 direction=0;1;0 outer=0.125
             for i in ..NBLOBS
-                !light position=$(:blob;i) radius=blob_radius[i] color=blob_color(i)*blob_area[i]
-            !material color=0;1;0 roughness=0.5
-                !sphere size=BALL_RADIUS
-            !group fragment=read('../glsl/sdf_sphere_shader.frag') vertex=read('../glsl/sdf_sphere_shader.vert') show_cost=$(:show_cost) \
-                   NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=100 normal_delta=R/100 epsilon=R/1000 far=R*3 \
+                !light position=$(:blob;i) radius=blob_radius[i] color=blob_color(i)*blob_area[i]/2
+            !group fragment=read('../glsl/sdf_sphere_shader.frag') vertex=read('../glsl/sdf_sphere_shader.vert') show_cost=$:show_cost \
+                   NSPHERES=NBLOBS smoothing=SMOOTHING max_iterations=100 normal_delta=R/100 epsilon=R/1000 \
                    sphere_positions=($(:blob;i) for i in ..NBLOBS) \
                    sphere_colors=(blob_color(i) for i in ..NBLOBS) \
                    sphere_radii=blob_radius
                 !material roughness=0.4 color=0.5 metal=true
-                    !sphere size=R*1.25
+                    !sphere size=R*1.5
+            !group
+                !material color=0;1;0 roughness=0.5 translucency=BALL_RADIUS/2
+                    !sphere size=BALL_RADIUS
     !record filename=('day29.mp4' if RECORD and beat >= 5) codec=:hevc crf=25 hidden=true
         !reference id=:top
     !key name=:space state=:show_cost
