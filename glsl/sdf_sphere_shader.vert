@@ -10,7 +10,6 @@ in vec4 material_albedo;
 in vec4 material_properties;
 
 out vec3 world_position;
-out vec2 coord;
 
 flat out vec4 fragment_albedo;
 flat out vec4 fragment_properties;
@@ -20,7 +19,6 @@ uniform mat4 pv_matrix;
 void main() {
     world_position = (model_matrix * vec4(model_position, 1.0)).xyz;
     gl_Position = pv_matrix * vec4(world_position, 1.0);
-    coord = (gl_Position.xy / gl_Position.w + 1.0) / 2.0;
     fragment_albedo = material_albedo;
     fragment_properties = material_properties;
 }
