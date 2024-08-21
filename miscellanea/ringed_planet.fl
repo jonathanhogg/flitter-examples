@@ -14,7 +14,9 @@
 --
 -- The planet is a fairly obvious process of subtracting 1000 small spheres
 -- from a large sphere. However, then I'm generating a noise texture and
--- wrapping it in that to create more visual interest.
+-- wrapping it in that to create more visual interest. There's actually an ugly
+-- distortion down the 0 longitude line where the texture wraps from right to
+-- left, but I've rotated it round to the dark side so you don't notice ;-).
 --
 -- You'll need to be using a recent pull from the main Flitter repo to run this
 -- as it uses unreleased features (as of 1.0.0b17).
@@ -35,7 +37,7 @@ let SIZE=1080
     !adjust size=1024;512 id=:surface hidden=true color_matrix=1;1;1;0;0;0;0;0;0
         !noise components=1 octaves=3 scale=0.01
     !record filename=OUTPUT codec=:hevc
-        !bloom id=:top radius=min(SIZE)/50 exposure=-2
+        !bloom radius=min(SIZE)/50 exposure=-2
             !canvas3d samples=4 rotate_z=beat/30+2/3 rotate_x=-0.1 viewpoint=0;-1500;0 up=0;0;1 far=3000 fov=0.125 fov_ref=:narrow
                 !light color=0.9 direction=1;0;-0.1
                 !light color=0.09 direction=0;1;-0.1
@@ -43,13 +45,13 @@ let SIZE=1080
                 for i in ..RINGS
                     let width=50*beta(:width)[i] r1=300+uniform(:r1)[i]*200-width/2 r2=r1+width thickness=beta(:thickness)[i]
                     !material color=1 roughness=0.4 transparency=1-thickness/5
-                        !difference size=1;1;thickness
-                            !cylinder segments=128 size=r2;r2;1
-                            !cylinder segments=128 size=r1;r1;1
+                        !difference
+                            !cylinder segments=128 size=r2;r2;thickness
+                            !cylinder segments=128 size=r1;r1;thickness
                 !material color=1 roughness=0.5 texture_id=:surface
-                    !difference uv_remap=:sphere rotation=0;0;0.5
+                    !difference uv_remap=:sphere rotation=0;0;-0.25
                         !sphere segments=128 size=200
                         for i in ..CRATERS
                             let r=1+abs(normal(:size)[i])*15
-                            !transform rotate_x=uniform(:lon)[i] rotate_z=(beta(:lat)[i]-0.5)/2
+                            !transform rotate_z=uniform(:lon)[i] rotate_x=(beta(:lat)[i]-0.5)/2
                                 !sphere size=r position=0;200+r*0.9;0
