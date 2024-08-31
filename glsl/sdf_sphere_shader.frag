@@ -9,8 +9,6 @@ ${HEADER}
 // Copyright 2024 by Jonathan Hogg and licensed under the original Flitter
 // BSD 2-clause license https://github.com/jonathanhogg/flitter/blob/main/LICENSE
 
-const vec3 greyscale = vec3(0.299, 0.587, 0.114);
-
 in vec3 world_position;
 
 flat in vec4 fragment_albedo;
@@ -43,7 +41,8 @@ uniform float sphere_radii[NSPHERES];
 
 // Use PBR lighting calculations from Flitter core:
 //
-<%include file="pbr_lighting.glsl"/>
+<%include file="color_functions.glsl"/>
+<%include file="lighting_functions.glsl"/>
 
 // Basic ray-marching SDF implementation:
 
@@ -221,8 +220,7 @@ void main() {
     float opacity = 1.0 - transparency;
     vec3 final_color = mix(diffuse_color, fog_color, fog_alpha) * opacity + specular_color * (1.0 - fog_alpha);
     if (monochrome) {
-        float grey = dot(final_color, greyscale);
-        final_color = vec3(grey);
+        final_color = vec3(srgb_luminance(final_color));
     }
     fragment_color = vec4(final_color * tint, opacity);
 
