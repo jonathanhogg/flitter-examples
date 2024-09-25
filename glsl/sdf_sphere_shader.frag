@@ -133,15 +133,15 @@ Trace ray_march(vec3 origin, vec3 direction, float max_distance) {
 
 
 void main() {
-    vec3 V;
+    vec3 view_direction;
     float view_distance;
     if (orthographic) {
-        V = normalize(view_position - view_focus);
-        view_distance = dot(view_position - world_position, V);
+        view_direction = normalize(view_position - view_focus);
+        view_distance = dot(view_position - world_position, view_direction);
     } else {
-        V = view_position - world_position;
-        view_distance = length(V);
-        V /= view_distance;
+        view_direction = view_position - world_position;
+        view_distance = length(view_direction);
+        view_direction /= view_distance;
     }
 
     // This is the additional SDF bit.
@@ -167,9 +167,9 @@ void main() {
     float max_distance = 0.0;
     for (int i = 0; i < NSPHERES; i++) {
         vec3 p = sphere_positions[i] - world_position;
-        float d = dot(-V, p);
+        float d = dot(-view_direction, p);
         float r = sphere_radii[i] + smoothing*1.5;
-        if (length(p + d * V) < r) {
+        if (length(p + d * view_direction) < r) {
             max_distance = max(max_distance, d);
             sphere_include[i] = true;
             if (start_sphere == -1) {
@@ -185,7 +185,7 @@ void main() {
     // Ray-march to find the actual position, normal and emissive colour of this
     // fragment.
     //
-    Trace trace = ray_march(world_position, -V, max_distance);
+    Trace trace = ray_march(world_position, -view_direction, max_distance);
 % if show_cost:
     float a = float(trace.i) / float(max_iterations);
     float b = float(sphere_count) / float(NSPHERES);
@@ -197,7 +197,7 @@ void main() {
     vec3 emissive = trace.c;
     vec3 world_norm = trace.n;
     view_distance += trace.d;
-    vec3 world_pos = world_position - V*trace.d;
+    vec3 world_pos = world_position - view_direction*trace.d;
 
     // The rest of the material properties and lighting calculation is done
     // as per usual.
@@ -212,10 +212,10 @@ void main() {
 
     vec3 transmission_color = vec3(0.0);
     vec3 diffuse_color = vec3(0.0);
-    vec3 specular_color = emissive;
-    compute_pbr_lighting(world_pos, world_norm, V,
-                         ior, roughness, metal, ao, albedo,
-                         transmission_color, diffuse_color, specular_color);
+    vec3 specular_color = vec3(0.0);
+
+    compute_emissive_lighting(world_norm, view_direction, emissive, specular_color);
+    compute_pbr_lighting(world_pos, world_norm, view_direction, ior, roughness, metal, ao, albedo, transmission_color, diffuse_color, specular_color);
 
     float opacity = 1.0 - transparency;
     vec3 final_color = mix(diffuse_color, fog_color, fog_alpha) * opacity + specular_color * (1.0 - fog_alpha);

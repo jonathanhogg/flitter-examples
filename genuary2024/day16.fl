@@ -26,19 +26,21 @@
 
 %pragma tempo 60
 
-let SIZE=RECORD or 1080
+let SIZE=RECORD or (1920;1080)
     M=20
     N=10k
 
 !window size=SIZE
-    !bloom id=:top radius=hypot(SIZE[..2])/100
-        !canvas3d samples=8 viewpoint=0;0;100 fov=40/360 rotate=beat/(30;20;15)
-            !light color=1 direction=1;0;0
-            !light color=1 direction=0;1;0
-            !light color=1 direction=0;0;1
-            !material color=0.944;0.776;0.373 metal=1 roughness=.2
-                for i in ..N
-                    !transform rotate_y=i/N translate=20;0;0 rotate_z=i*M/N
-                        !cone segments=3 flat=true position=7.5;0;0 size=3 rotation=-0.5/M+1/N;0;1/12
+    !adjust id=:top tonemap=:aces
+        !bloom radius=hypot(SIZE[..2])/100
+            !flare threshold=15 attenuation=3 diagonal_length=0.5
+                !canvas3d samples=4 viewpoint=0;0;100 fov=40/360 fov_ref=:narrow rotate=beat/(30;20;15)
+                    !light color=1 direction=1;0;0
+                    !light color=1 direction=0;1;0
+                    !light color=1 direction=0;0;1
+                    !material metal=1 roughness=0.3 color=0.944;0.776;0.373
+                        for i in ..N
+                            !transform rotate_y=i/N translate=20;0;0 rotate_z=i*M/N
+                                !cone segments=3 flat=true position=7.5;0;0 size=3 rotation=-0.5/M+1/N;0;1/12
     !record filename=('day16.mp4' if RECORD) codec=:hevc crf=25 hidden=true
         !reference id=:top

@@ -33,7 +33,7 @@ let SIZE=RECORD or 1080
                     d=AMPLITUDE*exp(-DECAY*t)
                     x=(sin(t*FREQ[0]+PHASE[0])+sin(t*FREQ[1]+PHASE[1]))*d
                     y=(sin(t*FREQ[2]+PHASE[2])+sin(t*FREQ[3]+PHASE[3]))*d
-                !paint stroke_width=5*((1-i/PATHS)+0.1) color=hsl(0.6;0.6;v)
+                !paint stroke_width=5*((1-i/PATHS)+0.1) color=hsl(0.6;0.6;v*v)
                     !line curve=0.5 stroke=true points=zip(x, y)
     !record filename=('day8.mp4' if RECORD) codec=:hevc crf=30 hidden=true
         !reference id=:top
