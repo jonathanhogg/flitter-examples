@@ -32,12 +32,12 @@ let SIZE=2160 or RECORD
     let rot=beat/30
     !canvas3d size=SIDE orthographic=true far=R*2 width=R*2 fog_max=R*2 samples=4 color=1 camera_id=:view;0 hidden=true
         !transform rotate=rot scale=R
-            !camera id=:view;0 position=0;0;+1 up=0;+1;0 secondary=true
-            !camera id=:view;1 position=0;+1;0 up=0;0;-1 secondary=true
-            !camera id=:view;2 position=+1;0;0 up=0;0;-1 secondary=true
-            !camera id=:view;3 position=0;0;-1 up=-1;0;0 secondary=true
-            !camera id=:view;4 position=-1;0;0 up=0;0;+1 secondary=true
-            !camera id=:view;5 position=0;-1;0 up=0;0;+1 secondary=true
+            !camera id=:view;0 position=+1;0;0 up=0;+1;0 secondary=true
+            !camera id=:view;1 position=-1;0;0 up=0;+1;0 secondary=true
+            !camera id=:view;2 position=0;+1;0 up=0;0;-1 secondary=true
+            !camera id=:view;3 position=0;-1;0 up=0;0;+1 secondary=true
+            !camera id=:view;4 position=0;0;+1 up=0;+1;0 secondary=true
+            !camera id=:view;5 position=0;0;-1 up=0;+1;0 secondary=true
         !light color=1 direction=0;0;-1
         for i in ..N
             let a=$(:dot;i)
@@ -49,10 +49,10 @@ let SIZE=2160 or RECORD
     !canvas id=:cube_map size=SIDE*(6;1) scale=SIDE stroke_width=6m color=1 hidden=true
         for i in ..6
             !transform translate=i;0
-                !image size=1 texture_id=:view;i
+                !image size=1 image_id=:view;i
                 !rect point=3m size=1-6m stroke=true
     !canvas3d id=:top size=SIZE viewpoint=0;0;R*4 up=0;1;0 fov=55/360 far=R*8 fog_min=R*3 fog_max=R*5 samples=4
         !light color=1
-        !box size=R*2 texture_id=:cube_map rotation=rot
+        !box size=R*2 color_id=:cube_map rotation=rot
     !record filename=('day22.mp4' if RECORD and beat > 30) codec=:hevc crf=25 hidden=true
         !reference id=:top

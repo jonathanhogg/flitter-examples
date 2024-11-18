@@ -41,7 +41,7 @@ let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
         let clump=(centre_of_mass-$(:boid;i))/100
             distance=hypot(clump)
             variation=(vx[i];vy[i];vz[i])*5
-        !particle id=i position=(beta(:pos;i)[..3]-0.5)*400 force=variation+clump+heading/distance
+        !particle id=i position=(beta(:pos;i)[..3]-0.5)*400 force=variation+clump+heading/distance radius=1 charge=1
         !distance from=:middle to=i max=250
 
 !window size=SIZE

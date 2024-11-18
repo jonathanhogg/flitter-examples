@@ -61,7 +61,7 @@ let initial_points=uniform(:position)[..2*NPOINTS]*SIZE
 
 !physics state=:points dimensions=2
     for i in ..NPOINTS
-        !particle id=i charge=1 position=initial_points[i*2..(i+1)*2] velocity=uniform(:velocity;i)[..2]*SIZE
+        !particle id=i radius=1 charge=1 position=initial_points[i*2..(i+1)*2] velocity=uniform(:velocity;i)[..2]*SIZE
         for j in i+1..NPOINTS
             !distance from=i to=j max=hypot(SIZE[..2])/3 strength=0.1
     !electrostatic strength=1M

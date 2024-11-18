@@ -16,15 +16,15 @@
 let SIZE=RECORD or 1080
     TOASTERS=100
 
-func rounded_box(_, position=0, size=1, radius=0.25, side_texture_id=null, segments=32)
+func rounded_box(_, position=0, size=1, radius=0.25, side_color_id=null, segments=32)
     let size=size*(1;1;1) inner=size-radius*2
-    (!transform translate=position) if side_texture_id  else (!union position=position)
+    (!transform translate=position) if side_color_id  else (!union position=position)
         if inner[1] and inner[2]
-            !box size=size[0];inner[1];inner[2] texture_id=side_texture_id
+            !box size=size[0];inner[1];inner[2] color_id=side_color_id
         if inner[0] and inner[2]
-            !box size=inner[0];size[1];inner[2] texture_id=side_texture_id
+            !box size=inner[0];size[1];inner[2] color_id=side_color_id
         if inner[0] and inner[1]
-            !box size=inner[0];inner[1];size[2] texture_id=side_texture_id
+            !box size=inner[0];inner[1];size[2] color_id=side_color_id
         for x in (-1;1)*inner[0]/2
             if inner[2]
                 for y in (-1;1)*inner[1]/2 if inner[1] else 0
@@ -39,15 +39,15 @@ func rounded_box(_, position=0, size=1, radius=0.25, side_texture_id=null, segme
                 for z in (-1;1)*inner[2]/2 if inner[2] else 0
                     !cylinder segments=segments start=-inner[0]/2;y;z end=inner[0]/2;y;z radius=radius
 
-func toaster(_, bread=0, wings=0, bread_texture_id=null)
+func toaster(_, bread=0, wings=0, bread_color_id=null)
     let b=impulse(bread%1, 0.1)
     !transform scale=4;2.5;3
         !material color=0.5 metal=true roughness=0.5
             @rounded_box radius=2 size=10
         !transform translate=0;0;3+3.5*b scale=2.5;1;2.5
             !material color=hsv(0.15;0.5;1)
-                @rounded_box size=2;1;2 position=0;1.25;0 side_texture_id=bread_texture_id
-                @rounded_box size=2;1;2 position=0;-1.25;0 side_texture_id=bread_texture_id
+                @rounded_box size=2;1;2 position=0;1.25;0 side_color_id=bread_color_id
+                @rounded_box size=2;1;2 position=0;-1.25;0 side_color_id=bread_color_id
             !material color=hsv(0.1;0.9;0.5)
                 @rounded_box size=2.005;0.99;2.005 position=0;1.25;0
                 @rounded_box size=2.005;0.99;2.005 position=0;-1.25;0
@@ -65,7 +65,7 @@ func toaster(_, bread=0, wings=0, bread_texture_id=null)
         !box size=0.1;2;15 position=-20;0;0
 
 !window size=SIZE
-    !canvas id=:toast size=768;128 linear=true hidden=true translate=768*5/6;0
+    !canvas id=:toast size=768;128 linear=true hidden=true translate=768*3/6;0
         !gradient point=64 radius=64
             !stop color=hsv(0.1;0.9;0.5);1/2
             !stop color=hsv(0.1;0.9;0.5);1/3
@@ -79,6 +79,6 @@ func toaster(_, bread=0, wings=0, bread_texture_id=null)
             let y;z=(uniform(:pos;i)[..2]-0.5)*1k
                 x=(0.5-sawtooth(beat/30+uniform(:x_phase)[i]))*1.5k
             !transform translate=x;y;z
-                @toaster wings=beat+uniform(:wing_phase)[i] bread=beat/10+uniform(:bread_phase)[i] bread_texture_id=:toast
+                @toaster wings=beat+uniform(:wing_phase)[i] bread=beat/10+uniform(:bread_phase)[i] bread_color_id=:toast
     !record filename=('day6.mp4' if RECORD) codec=:hevc crf=25 hidden=true
         !reference id=:top

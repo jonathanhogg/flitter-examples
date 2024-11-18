@@ -34,11 +34,14 @@ func spar(_, position=0, size=1, end=1, holes=4)
                     !slice origin=-length/2;0;height/2 normal=(height-end)/2;0;length
                         !box size=length;width;max(height, end)
                 !cylinder size=end/2;end/2;width position=length/2;0;0 rotation=0.25;0;0
-            for i in ..holes
+            for i in 0..holes
                 let k=i/(holes-1)
                     p=length*(k-0.5)
                     r=(height+k*(end-height))/3
-                !cylinder size=r;r;width position=p;0;0 rotation=0.25;0;0
+                !cylinder size=r;r;width*2 position=p;0;0 rotation=0.25;0;0
+            !cylinder size=height*0.55;height*0.55;width*0.3 position=-length/2;0;0 rotation=0.25;0;0
+            !cylinder size=end*0.55;end*0.55;width/2 position=length/2;-width*0.45;0 rotation=0.25;0;0
+            !cylinder size=end*0.55;end*0.55;width/2 position=length/2;width*0.45;0 rotation=0.25;0;0
 
 func leg(_, down=1, curvature=0.013)
     !transform translate=0.05;0;0 rotate_y=0.01*down-curvature

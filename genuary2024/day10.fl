@@ -74,7 +74,7 @@ void main() {
     !random strength=20
     !anchor id=:middle position=SIZE/2
     for i in ..NPOINTS
-        !particle id=i position=SIZE*uniform(:pos;i)[..2]
+        !particle id=i position=SIZE*uniform(:pos;i)[..2] charge=1 radius=1
         !distance from=:middle to=i max=RADIUS strength=50
 
 !window size=SIZE colorbits=16

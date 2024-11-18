@@ -99,6 +99,14 @@ func blob_color(i)
                        sphere_radii=blob_radius
                     !material roughness=0.4 color=0.5 metal=true
                         !sphere size=R*1.5
+
+                -- What might Flitter support for SDF look like?
+                !sdfsphere size=R*1.5 max_iterations=100 normal_delta=R/100 epsilon=R/1000
+                    !material roughness=0.4 color=0.5 metal=true
+                        !union smooth=SMOOTHING
+                            for i in ..NBLOBS
+                                !sphere position=$(:blob;i) size=blob_radius[i] emissive=blob_color(i)
+
                 !group
                     !material color=0;1;0 roughness=0.4 translucency=BALL_RADIUS/2
                         !intersect

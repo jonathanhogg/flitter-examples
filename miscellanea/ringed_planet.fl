@@ -16,10 +16,7 @@
 -- from a large sphere. However, then I'm generating a noise texture and
 -- wrapping it in that to create more visual interest. There's actually an ugly
 -- distortion down the 0 longitude line where the texture wraps from right to
--- left, but I've rotated it round to the dark side so you don't notice ;-).
---
--- You'll need to be using a recent pull from the main Flitter repo to run this
--- as it uses unreleased features (as of 1.0.0b17).
+-- left, but it's on the dark side so you don't notice ;-).
 --
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
@@ -32,6 +29,11 @@
 let SIZE=1080
     CRATERS=1000
     RINGS=50
+
+func BETA(seed, a, b, i)
+    let n=a + b - 1
+        u=uniform(seed)[i*n..(i+1)*n]
+    sort(u)[a-1]
 
 !window size=SIZE
     !adjust size=1024;512 id=:surface hidden=true color_matrix=1;1;1;0;0;0;0;0;0
@@ -48,10 +50,10 @@ let SIZE=1080
                         !difference
                             !cylinder segments=128 size=r2;r2;thickness
                             !cylinder segments=128 size=r1;r1;thickness
-                !material color=1 roughness=0.5 texture_id=:surface
-                    !difference uv_remap=:sphere rotation=0;0;-0.25
+                !material roughness=0.5 color_id=:surface
+                    !difference uv_remap=:sphere
                         !sphere segments=128 size=200
                         for i in ..CRATERS
-                            let r=1+abs(normal(:size)[i])*15
+                            let r=5+45*BETA(:size, 2, 6, i)
                             !transform rotate_z=uniform(:lon)[i] rotate_x=(beta(:lat)[i]-0.5)/2
                                 !sphere size=r position=0;200+r*0.9;0
