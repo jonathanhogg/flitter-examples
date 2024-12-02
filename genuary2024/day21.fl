@@ -30,8 +30,8 @@ func spar(_, position=0, size=1, end=1, holes=4)
         !difference
             !union
                 !cylinder size=height/2;height/2;width position=-length/2;0;0 rotation=0.25;0;0
-                !slice origin=-length/2;0;-height/2 normal=(height-end)/2;0;-length
-                    !slice origin=-length/2;0;height/2 normal=(height-end)/2;0;length
+                !trim origin=-length/2;0;-height/2 normal=(height-end)/2;0;-length
+                    !trim origin=-length/2;0;height/2 normal=(height-end)/2;0;length
                         !box size=length;width;max(height, end)
                 !cylinder size=end/2;end/2;width position=length/2;0;0 rotation=0.25;0;0
             for i in 0..holes
@@ -64,49 +64,50 @@ func laser(_, power=0, rotation=0, elevation=0.125)
                     !cone size=0.03
                     !cone size=0.03 position=0;0;-0.01
             if power
-                !light start=0 end=0;0;-2000 color=5*power*(1;0.25;0)
+                !light start=0 end=0;0;-2000 color=10*power*(1;0.25;0)
                 !material color=0 metal=false roughness=1
-                    !cylinder start=0 end=0;0;-2000 radius=0.002 emissive=0;linear(power);0
-                    !cylinder start=0 end=0;0;-2000 radius=0.005 emissive=power;0;0 transparency=0.5
+                    !cylinder start=0 end=0;0;-2000 radius=0.002 emissive=0;2*linear(power);0
+                    !cylinder start=0 end=0;0;-2000 radius=0.005 emissive=2*power;0;0 transparency=0.5
 
 !window size=SIZE
-    !bloom id=:top radius=SIZE[0]/108 exposure=-1
-        !canvas3d viewpoint=0;0;500 far=2000 fov=30/360 samples=4 fog_min=500 fog_max=2000
-            !light color=0.25 direction=0;0;-1
-            !light color=0.25 direction=0;-1;0
-            !light color=0.25 direction=1;1;1
-            !transform rotate=-0.25+sin(t/15)*0.05;sin(t/10)*0.03;-beat/30 scale=200
-                !material color=0.5 metal=true roughness=0.4
-                    !union
-                        !sphere segments=128 size=0.16;0.16;0.13 position=0;0;0.1
-                        !transform translate=0;0;0.05
-                            !difference
-                                @saucer
-                                for i in ..4
-                                    !transform rotate_z=i/4 translate=0.32;0;0.1
-                                        !box size=0.22;0.01;0.2
-                            !transform scale=0.97
-                                @saucer
+    !adjust tonemap=:aces
+        !bloom id=:top radius=SIZE[0]/108 exposure=-1
+            !canvas3d viewpoint=0;0;500 far=2000 fov=30/360 samples=4 fog_min=500 fog_max=2000
+                !light color=1 direction=0;0;-1
+                !light color=1 direction=0;-1;0
+                !light color=1 direction=1;1;1
+                !transform rotate=-0.25+sin(t/15)*0.05;sin(t/10)*0.03;-beat/30 scale=200
+                    !material color=0.5 metal=true roughness=0.4
+                        !union
+                            !sphere segments=128 size=0.16;0.16;0.13 position=0;0;0.1
+                            !transform translate=0;0;0.05
+                                !difference
+                                    @saucer
+                                    for i in ..4
+                                        !transform rotate_z=i/4 translate=0.32;0;0.1
+                                            !box size=0.22;0.01;0.2
+                                !transform scale=0.97
+                                    @saucer
+                            !transform translate=0;0;-0.07
+                                !difference
+                                    !sphere size=0.12;0.12;0.09 position=0;0;0.05
+                                    !cylinder size=0.03;0.03;0.1
+                                    for i in ..NLEGS
+                                        !transform rotate_z=i/NLEGS
+                                            !box size=0.2;0.03;0.05 position=0.1;0;0
                         !transform translate=0;0;-0.07
-                            !difference
-                                !sphere size=0.12;0.12;0.09 position=0;0;0.05
-                                !cylinder size=0.03;0.03;0.1
-                                for i in ..NLEGS
-                                    !transform rotate_z=i/NLEGS
-                                        !box size=0.2;0.03;0.05 position=0.1;0;0
-                    !transform translate=0;0;-0.07
-                        for i in ..NLEGS
-                            !transform rotate_z=i/NLEGS
-                                @leg down=quad(triangle(beat/10))
-                        !material color=0 metal=false roughness=1
-                            !sphere size=0.08 position=0;0;0.05
-                    !transform translate=0;0;-0.1
-                        @laser rotation=-beat/10 elevation=0.1+sine(beat/5)*0.1 power=0.5+4.5*impulse(beat*5)
-                !material color=0 metal=false roughness=0.1
-                for i in ..NLIGHTS
-                    let b=impulse(beat+2*i/NLIGHTS)
-                    !transform rotate_z=i/NLIGHTS translate=0.44;0;0.018
-                        !sphere size=0.005 emissive=2*b
-                        !light position=0;0;-0.004 color=100*b
+                            for i in ..NLEGS
+                                !transform rotate_z=i/NLEGS
+                                    @leg down=quad(triangle(beat/10))
+                            !material color=0 metal=false roughness=1
+                                !sphere size=0.08 position=0;0;0.05
+                        !transform translate=0;0;-0.1
+                            @laser rotation=-beat/10 elevation=0.1+sine(beat/5)*0.1 power=0.5+4.5*impulse(beat*5)
+                    !material color=0 metal=false roughness=0.1
+                    for i in ..NLIGHTS
+                        let b=impulse(beat+2*i/NLIGHTS)
+                        !transform rotate_z=(i+0.5)/NLIGHTS translate=0.44;0;0.018
+                            !sphere size=0.005 emissive=2*b
+                            !light position=0;0;-0.004 color=100*b
     !record filename=('day21.mp4' if RECORD) codec=:hevc crf=25 hidden=true
         !reference id=:top
