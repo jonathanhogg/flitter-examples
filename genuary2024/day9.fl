@@ -12,7 +12,7 @@
 
 let SIZE=RECORD or 1080
     TEXT='BBC Computer 32K';'Acorn DFS';'BASIC';'>10 PRINT"HELLO!"';'>20 GOTO 10';'>RUN_'
-    BBC_FONT=read_bytes('../data/bbc')
+    BBC_FONT=read_bytes('../data/BBC')
 
 func char_bitmap(char)
     let offset=(char-32)*8
