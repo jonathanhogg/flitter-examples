@@ -2,22 +2,22 @@
 -- LoveByte Tiny Code Christmas 2024
 -- Day 1: Making Shapes
 --
--- This uses a simple recursive function to create an xmas tree out of 20,001 cones.
+-- This uses a simple recursive function to create a tree out of thousands of cones.
 -- The function calls here are all completely removed by the simplifier, which recognises
 -- that this call tree is entirely static and inlines them all recursively to leave just
--- a static node tree. You can play with the `m`, `n` and `o` default values to change the
--- shape of the tree.
+-- a static node tree. All of the cones are dispatched at the same time to the GPU. The
+-- run-time cost is all in collecting the transform matrices.
 
 
-func R(s,m=2,n=100,o=2)
+func R(s,d=1,m=2,n=150)
     s
     for i in ..m*n
-        (!transform rotate_z=r[0] translate=0;0;r[1] rotate_x=.15+.1*r[2] scale=(1-r[1])/o) where r=uniform(m;i)[..3]
-            R(s,m-1)
+        (!transform rotate_z=q translate=0;0;.1+z*.9 rotate_x=(.8+r)/10 scale=(1-z)/2) where q;r;z=uniform(d;i)
+            R(s,d;i,m-1,n-i/m)
 
 !window size=1080
-    !canvas3d id=:t samples=4 position=0;2;.3 focus=0;0;.4 fov=.1 color=0;1;0 rotate_z=beat/30
-        (!light color=.2 position=0;0;1);(!box size=10;10;.01);R(!cone size=.05;.05;1 position=0;0;.5)
+    !canvas3d id=:t samples=4 position=0;2;.3 focus=0;0;.5 fov=.1 color=0;1;0 rotate_z=beat/30
+        (!light color=.2 position=0;0;1);(!box size=9;9;1m);R(!cone size=.05;.05;1 position=0;0;.5)
 
 
     -- Record a short looping video with:
