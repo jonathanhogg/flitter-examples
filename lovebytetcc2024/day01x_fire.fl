@@ -1,0 +1,30 @@
+
+-- LoveByte Tiny Code Christmas 2024
+-- Day 1 extra: Fire
+--
+-- The normal fire demo effect requires state. Here I'm using `!counter` objects to
+-- provide that state. There is a counter per sphere with the rate of change of the
+-- bottom layer being some input noise and the rate of each layer above dependent
+-- on the average of the neighbouring spheres in the layer below.
+--
+-- Run this with the `--simplifystate=0` flag to turn off running the simplifier on
+-- static state, otherwise this will glitch pretty unacceptably.
+
+
+let N=15 W=clock T=W*10 R=..N C=(x;y;z) for x in R for y in R for z in R
+
+for x;y;z in C
+    let f=$(x+o;y-1;z+p) for o in -1..2 for p in -1..2
+    !counter state=x;y;z minimum=0 maximum=1 time=T rate=2*sum(f)/len(f)-1.05 if y else noise(:n,x,z,W)
+
+!window size=1080
+    !canvas3d id=:t position=N/2 composite=:add depth_test=0 rotate_y=W/20
+        (!sphere position=(x;y;z)-N/2 size=.45 emissive=c/max(c) where c=colortemp($(x;y;z)*4k)) for x;y;z in C
+
+
+    -- Record a short looping video with:
+    -- flitter lovebytetcc2024/day01x_fire.fl --lockstep --runtime=30
+
+    if run_time and frame > 1
+        !record filename='day01x_fire.mp4' codec=:hevc crf=30
+            !reference id=:t
