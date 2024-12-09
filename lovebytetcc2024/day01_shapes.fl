@@ -5,10 +5,9 @@
 -- This uses a simple recursive function to create an xmas tree out of 20,001 cones.
 -- The function calls here are all completely removed by the simplifier, which recognises
 -- that this call tree is entirely static and inlines them all recursively to leave just
--- a static node tree.
---
--- Record a short looping video with:
--- flitter lovebytetcc2024/day01_shapes.fl --lockstep --runtime=15
+-- a static node tree. You can play with the `m`, `n` and `o` default values to change the
+-- shape of the tree.
+
 
 func R(s,m=2,n=100,o=2)
     s
@@ -18,8 +17,11 @@ func R(s,m=2,n=100,o=2)
 
 !window size=1080
     !canvas3d id=:t samples=4 position=0;2;.3 focus=0;0;.4 fov=.1 color=0;1;0 rotate_z=beat/30
-        !light color=.5 position=0;0;1
-        R(!cone size=.05;.05;1 position=0;0;.5)
+        (!light color=.2 position=0;0;1);(!box size=10;10;.01);R(!cone size=.05;.05;1 position=0;0;.5)
+
+
+    -- Record a short looping video with:
+    -- flitter lovebytetcc2024/day01_shapes.fl --lockstep --runtime=15
 
     if run_time
         !record filename='day01_shapes.mp4' codec=:hevc crf=30
