@@ -11,11 +11,11 @@
 -- static state, otherwise this will glitch pretty unacceptably.
 
 
-let N=15 W=clock T=W*10 R=..N C=(x;y;z) for x in R for y in R for z in R
+let N=15 W=time T=W*10 R=..N C=(x;y;z) for x in R for y in R for z in R
 
 for x;y;z in C
     let f=$(x+o;y-1;z+p) for o in -1..2 for p in -1..2
-    !counter state=x;y;z minimum=0 maximum=1 time=T rate=2*sum(f)/len(f)-1.05 if y else noise(:n,x,z,W)
+    !counter state=x;y;z min=0 max=1 time=T rate=2*mean(f)-1.05 if y else noise(:n,x,z,W)
 
 !window size=1080
     !canvas3d id=:t position=N/2 composite=:add depth_test=0 rotate_y=W/20
