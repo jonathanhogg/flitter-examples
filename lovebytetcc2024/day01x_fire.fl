@@ -2,20 +2,40 @@
 -- LoveByte Tiny Code Christmas 2024
 -- Day 1 extra: Fire
 --
--- The normal fire demo effect requires state. Here I'm using `!counter` objects to
--- provide that state. There is a counter per column with the rate of change of the
--- bottom layer being some input noise and the rate of each layer above dependent
--- on the average of the neighbouring spheres in the layer below.
+-- The normal fire demo effect requires state. Here we're using `!counter`
+-- objects to provide that state. There is a counter per column, with the rate
+-- of change of the bottom layer being some input noise and the rate of each
+-- layer above dependent on the average of the neighbouring cells in the layer
+-- below. This is all calculated column at a time with an N-way mean).
+--
+-- The `normalize(colortemp(k))` trick is a hack to deal with the fact that
+-- the `colortemp()` function returns irradiance, which scales to the 4-th
+-- power of the temperature. Treating the color as a vector and normalizing
+-- its length is a quick way to get roughly equal-brightness colors. We divide
+-- this color by 3 as most of the brightness actually comes from the fact that
+-- we are rendering all of the cells (`depth_test=0`) with additive blending
+-- (`composite=:add`).
+--
+-- The `if $(x;z)[y]` means we only generate cells that aren't dark. Although
+-- there is no visual difference in including them, the performance of
+-- rendering is vastly increased by skipping the model matrix calculations
+-- and GPU dispatch for all of the non-visible cells and so is worth the 13
+-- characters.
+--
+-- Note that - unlike the usual demoscene framebuffer-based implementation of
+-- fire - because this code is using floating-point counters and rates of
+-- change, it is frame-rate independent. You can control the simulation by
+-- changing the `-1.05)*25' constants in the rate calculation.
 
 
-let N=30 W=time T=W*10 O=-1..2 R=..N
+let N=32 O=-1..2 R=..N t=time
 
 for x in R,z in R
-    !counter state=x;z min=0 max=1 time=T initial=0[R] rate=noise(0,x,z,W);2*mean($(x+o;z+p) for o in O for p in O,N)[..N-1]-1.03
+    !counter state=x;z min=0 max=1 rate=(noise(0,x,z,t);2*mean($(x+o;z+p) for o in O for p in O,N)[..N-1]-1.05)*25
 
 !window size=1080
-    !canvas3d id=:t position=N/2 composite=:add depth_test=0 rotate_y=W/20
-        (!sphere position=(x;y;z)-N/2 size=.45 emissive=normalize(colortemp($(x;z)[y]*4k))) if $(x;z)[y] for x in R for y in R for z in R
+    !canvas3d id=:t position=N/2 depth_test=0 composite=:add rotate_y=t/15
+        (!box position=(x;y;z)-N/2 emissive=normalize(colortemp($(x;z)[y]*3k))/3) if $(x;z)[y] for x in R for y in R for z in R
 
 
     -- Record a short looping video with:
