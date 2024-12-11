@@ -1,0 +1,22 @@
+
+-- LoveByte Tiny Code Christmas 2024
+-- Day 1 extra: Metaballs
+--
+-- Another classic demoscene effect. I'm using a custom shader here for the
+-- rendering and a physics system to model 3 particles.
+
+
+!physics state=1 dimensions=2
+ for a in -1;1, b in 0;1
+  !barrier restitution=.7 position=a normal=a*(-b;b-1)
+ !gravity;(!particle id=i position=beta(i)[..2]-.5) for i in ..3
+!window id=:t size=1080 d=$(1;i)/2+.5 for i in ..3 fragment="""${HEADER}in vec2 coord;out vec4 c;uniform vec2[3]d;
+void main(){vec3 f;for(int i=0;i<3;i++){f[i]=pow(1.-length(d[i]-coord),3.);}c=vec4(f*cos(dot(f,vec3(15.))),1.);}"""
+
+
+    -- Record a short video with:
+    -- flitter lovebytetcc2024/day01x_fire.fl --lockstep --runtime=30
+
+    if run_time and frame > 2
+        !record filename='day02x_metaballs.mp4' codec=:hevc crf=30
+            !reference id=:t
