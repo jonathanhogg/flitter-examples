@@ -15,7 +15,7 @@ void main(){vec3 f;for(int i=0;i<3;i++){f[i]=pow(1.-length(d[i]-coord),3.);}c=ve
 
 
     -- Record a short video with:
-    -- flitter lovebytetcc2024/day01x_fire.fl --lockstep --runtime=30
+    -- flitter lovebytetcc2024/day02x_metaballs.fl --lockstep --runtime=30
 
     if run_time and frame > 2
         !record filename='day02x_metaballs.mp4' codec=:hevc crf=30
