@@ -6,7 +6,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day7.fl --lockstep --runtime=70 --define 'RECORD=1080'
+-- flitter day07_progress.fl --lockstep --runtime=70 --define 'RECORD=1080'
 
 %pragma tempo 60
 
@@ -58,5 +58,5 @@ let SIZE=RECORD or 1080
                         !sphere position=$(:doll;i;id) size=r
                     for from;to;d;r in BONES
                         !cylinder start=$(:doll;i;from) end=$(:doll;i;to) radius=r
-    !record filename=('day7.mp4' if RECORD and T>10) limit=60 codec=:hevc crf=20 hidden=true
+    !record filename=('day07_progress.mp4' if RECORD and T>10) limit=60 codec=:hevc crf=20 hidden=true
         !reference id=:top

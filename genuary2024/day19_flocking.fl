@@ -17,7 +17,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day19.fl --lockstep --runtime=120 --fps=30 --define 'RECORD=1080'
+-- flitter day19_flocking.fl --lockstep --runtime=120 --fps=30 --define 'RECORD=1080'
 
 %pragma tempo 60
 
@@ -64,5 +64,5 @@ let centre_of_mass=sum($(:boid;i) for i in ..N, 3)/N
                         !cone start=0 end=velocity/5
                     if i < LIGHTS
                         !light position=0 color=color*(20M/LIGHTS)
-    !record filename=('day19.mp4' if RECORD and beat > 60) codec=:hevc crf=25 hidden=true
+    !record filename=('day19_flocking.mp4' if RECORD and beat > 60) codec=:hevc crf=25 hidden=true
         !reference id=:top

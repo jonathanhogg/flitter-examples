@@ -25,7 +25,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day5.fl --lockstep --fps=30 --runtime=30 --define 'RECORD=960;720'
+-- flitter day05_molnar.fl --lockstep --fps=30 --runtime=30 --define 'RECORD=960;720'
 
 %pragma tempo 60
 
@@ -57,5 +57,5 @@ let SIZE=RECORD or (1440;1080)*2
                             !line close=true stroke=true points=SQUARE+perturb*((a[k];b[k];c[k];d[k])+shape*o[k])
         !group composite=:difference
             !rect size=SIZE color=1 fill=true
-    !record filename=('day5.mp4' if RECORD) codec=:hevc crf=32 hidden=true
+    !record filename=('day05_molnar.mp4' if RECORD) codec=:hevc crf=32 hidden=true
         !reference id=:top

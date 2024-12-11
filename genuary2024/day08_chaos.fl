@@ -10,7 +10,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day8.fl --lockstep --runtime=30 --fps=30 --define 'RECORD=1080'
+-- flitter day08_chaos.fl --lockstep --runtime=30 --fps=30 --define 'RECORD=1080'
 
 let SIZE=RECORD or 1080
     SCALE=hypot(SIZE[..2])/2000
@@ -35,5 +35,5 @@ let SIZE=RECORD or 1080
                     y=(sin(t*FREQ[2]+PHASE[2])+sin(t*FREQ[3]+PHASE[3]))*d
                 !paint stroke_width=5*((1-i/PATHS)+0.1) color=hsl(0.6;0.6;v*v)
                     !line curve=0.5 stroke=true points=zip(x, y)
-    !record filename=('day8.mp4' if RECORD) codec=:hevc crf=30 hidden=true
+    !record filename=('day08_chaos.mp4' if RECORD) codec=:hevc crf=30 hidden=true
         !reference id=:top

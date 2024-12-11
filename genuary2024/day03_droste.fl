@@ -29,7 +29,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day3.fl --lockstep --fps=30 --runtime=32 --define RECORD=1080
+-- flitter day03_droste.fl --lockstep --fps=30 --runtime=32 --define RECORD=1080
 
 %pragma tempo 60
 
@@ -47,5 +47,5 @@ let SIZE=RECORD or 2160
         !light color=0.9 direction=0;0;-1
         !box color_id=:texture size=100 rotation=beat/(10;15;30)
 
-    !record filename=('day3.mp4' if RECORD and beat > 1) codec=:hevc crf=25 limit=30 hidden=true
+    !record filename=('day03_droste.mp4' if RECORD and beat > 1) codec=:hevc crf=25 limit=30 hidden=true
         !reference id=:cube

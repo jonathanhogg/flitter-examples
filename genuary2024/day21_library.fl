@@ -9,7 +9,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day21.fl --lockstep --runtime=30 --fps=60 --define 'RECORD=1080'
+-- flitter day21_library.fl --lockstep --runtime=30 --fps=60 --define 'RECORD=1080'
 
 
 %pragma tempo 60
@@ -109,5 +109,5 @@ func laser(_, power=0, rotation=0, elevation=0.125)
                         !transform rotate_z=(i+0.5)/NLIGHTS translate=0.44;0;0.018
                             !sphere size=0.005 emissive=2*b
                             !light position=0;0;-0.004 color=100*b
-    !record filename=('day21.mp4' if RECORD) codec=:hevc crf=25 hidden=true
+    !record filename=('day21_library.mp4' if RECORD) codec=:hevc crf=25 hidden=true
         !reference id=:top

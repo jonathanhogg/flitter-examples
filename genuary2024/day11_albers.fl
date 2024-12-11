@@ -7,7 +7,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day11.fl --lockstep --runtime=70 --fps=60 --define 'RECORD=1080'
+-- flitter day11_albers.fl --lockstep --runtime=70 --fps=60 --define 'RECORD=1080'
 
 %pragma tempo 60
 
@@ -38,5 +38,5 @@ let SIZE=RECORD or 1080
                                     !line points=0;ROW_HEIGHT;TRIANGLE_WIDTH;ROW_HEIGHT;TRIANGLE_WIDTH/2;0 close=true fill=true
                                 else
                                     !line points=0;0;TRIANGLE_WIDTH;0;TRIANGLE_WIDTH/2;ROW_HEIGHT close=true fill=true
-    !record filename=('day11.mp4' if RECORD and beat>=CYCLE_TIME) codec=:hevc crf=25 hidden=true
+    !record filename=('day11_albers.mp4' if RECORD and beat>=CYCLE_TIME) codec=:hevc crf=25 hidden=true
         !reference id=:top

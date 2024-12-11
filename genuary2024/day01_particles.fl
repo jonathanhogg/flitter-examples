@@ -15,7 +15,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day1.fl --lockstep --fps=30 --runtime=60 --define RECORD=720
+-- flitter day01_particles.fl --lockstep --fps=30 --runtime=60 --define RECORD=720
 
 %pragma tempo 60
 
@@ -58,7 +58,7 @@ let launch_times=accumulate(average_interval*2*beta(:interval)[..total_fireworks
     !barrier position=0;0;0 normal=0;0;1 restitution=0
 
 !window size=SIZE colorbits=16
-    !record filename=('day1.mp4' if RECORD) codec=:hevc crf=25
+    !record filename=('day01_particles.mp4' if RECORD) codec=:hevc crf=25
         !bloom radius=SIZE[0]/72
             !canvas3d samples=4 viewpoint=0;-2k;200 focus=0;0;750 up=0;0;1 far=5k fov=60/360 fov_ref=:narrow \
                       fog_color=hsv(0.6;0.9;0.01) fog_min=2k fog_max=5k

@@ -16,7 +16,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day10.fl --lockstep --fps=30 --runtime=30 --define 'RECORD=720'
+-- flitter day10_hexagonal.fl --lockstep --fps=30 --runtime=30 --define 'RECORD=720'
 
 %pragma tempo 60
 
@@ -82,5 +82,5 @@ void main() {
         !edges radius=SCALE/3
             let points=($(:points;i);0.05+0.05*beta(:hue)[i];SCALE*1.5*beta(:line)[i]) for i in ..NPOINTS
             !shader fragment=VORONOI points=points
-    !record filename=('day10.mp4' if RECORD and beat) codec=:hevc crf=29 hidden=true
+    !record filename=('day10_hexagonal.mp4' if RECORD and beat) codec=:hevc crf=29 hidden=true
         !reference id=:top

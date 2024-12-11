@@ -22,7 +22,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day16.fl --lockstep --runtime=60 --fps=30 --define 'RECORD=1080'
+-- flitter day16_10000.fl --lockstep --runtime=60 --fps=30 --define 'RECORD=1080'
 
 %pragma tempo 60
 
@@ -42,5 +42,5 @@ let SIZE=RECORD or (1920;1080)
                         for i in ..N
                             !transform rotate_y=i/N translate=20;0;0 rotate_z=i*M/N
                                 !cone segments=3 flat=true position=7.5;0;0 size=3 rotation=-0.5/M+1/N;0;1/12
-    !record filename=('day16.mp4' if RECORD) codec=:hevc crf=25 hidden=true
+    !record filename=('day16_10000.mp4' if RECORD) codec=:hevc crf=25 hidden=true
         !reference id=:top

@@ -11,7 +11,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day6.fl --lockstep --fps=30 --runtime=31 --define 'RECORD=1080'
+-- flitter day06_screensaver.fl --lockstep --fps=30 --runtime=31 --define 'RECORD=1080'
 
 let SIZE=RECORD or 1080
     TOASTERS=100
@@ -80,5 +80,5 @@ func toaster(_, bread=0, wings=0, bread_color_id=null)
                 x=(0.5-sawtooth(beat/30+uniform(:x_phase)[i]))*1.5k
             !transform translate=x;y;z
                 @toaster wings=beat+uniform(:wing_phase)[i] bread=beat/10+uniform(:bread_phase)[i] bread_color_id=:toast
-    !record filename=('day6.mp4' if RECORD) codec=:hevc crf=25 hidden=true
+    !record filename=('day06_screensaver.mp4' if RECORD) codec=:hevc crf=25 hidden=true
         !reference id=:top

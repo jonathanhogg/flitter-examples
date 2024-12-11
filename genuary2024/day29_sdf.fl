@@ -37,7 +37,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 --
 -- Record a video with:
--- flitter day29.fl --lockstep --runtime=125 --define 'RECORD=1080'
+-- flitter day29_sdf.fl --lockstep --runtime=125 --define 'RECORD=1080'
 
 %pragma tempo 60
 
@@ -112,6 +112,6 @@ func blob_color(i)
                         !intersect
                             !sphere size=BALL_RADIUS
                             !box size=BALL_RADIUS*1.5
-    !record filename=('day29.mp4' if RECORD and beat >= 5) codec=:hevc crf=25 hidden=true
+    !record filename=('day29_sdf.mp4' if RECORD and beat >= 5) codec=:hevc crf=25 hidden=true
         !reference id=:top
     !key name=:space state=:show_cost
