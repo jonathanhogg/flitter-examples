@@ -1,6 +1,6 @@
 
 -- LoveByte Tiny Code Christmas 2024
--- Day 1 extra: Metaballs
+-- Day 2 extra: Metaballs
 --
 -- Another classic demoscene effect. I'm using a custom shader here for the
 -- rendering and a physics system to model 3 particles.
