@@ -9,7 +9,7 @@
 
 let t=beat/20 s=300 d=sine(t)/6
 func f(r,l)
- for i in (1..5 if r)
+ for i in 1..5 if r
   (!group translate=i*s/4;0 rotate=d scale=i/8) for d in (d;-d)
    f(r-1, l/2)
  !line points=0;12;s;6;s;-6;0;-12;0;10 fill=1
