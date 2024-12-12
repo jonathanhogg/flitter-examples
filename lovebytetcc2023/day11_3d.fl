@@ -1,20 +1,16 @@
 -- The Third Dimension
 --
--- This example is based on code written for a live performance of Feral Five's
--- song "Ego". 3D simplex noise is used to derive the size of each box and the
--- starting point for this is moved continuously to create the "passing dark
--- clouds" effect. A single very bright light is placed at the centre of the
--- voxel cube.
+-- This example is based on code written for a live performance of Feral
+-- Five's song "Ego". A 3D slice through 4D noise is used to derive the size
+-- of each box with the 4th axis moving continuously to create the shifting
+-- dark clouds effect. A single very bright light is placed at the centre of
+-- the voxel cube.
 --
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 
-let d=..20 g=(.5+d)/20-.5 r=g*2+beat/2 p=g*1k
+let N=25 D=..N G=(.5+D)/N-.5 R=G*3 S=1k P=G*S T=time f=quad(noise(0,T,R,R,R)+.5)*S/N
 !window size=1080
-    !canvas3d viewpoint=0;0;2k far=4k fov=1/8 rotate=beat/60
+    !canvas3d position=S far=2*S fov=1/6 color=1 rotate=T/30
         !light position=0 color=.2M
-        !material color=1
-            for i in d
-                let f=linear(noise(0,r[i],r,r)+.5)*50
-                for j in d
-                    for k in d
-                        !box flat=1 position=p[i;j;k] size=f[j*20+k]
+        for i in D, j in D, k in D
+            !box position=P[i;j;k] size=f[(i*N+j)*N+k]
