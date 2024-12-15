@@ -1,0 +1,64 @@
+
+-- LoveByte Tiny Code Christmas 2024
+-- Day 6 extra: Renderbars
+--
+-- This is an attempt to do the most straight conversion of the TIC-80 sample
+-- possible. Generally this is harder to do than you'd think as Flitter is
+-- fundamentally a different beast - it's a functional language that constructs
+-- a tree describing the output, rather than a procedural language calling
+-- functions that execute immediate drawing operations. I've not attempted to
+-- optimise this for size as I'm more interested in side-by-side comparison.
+--
+-- A couple of other important differences of note:
+-- - `time` is a global name returning the frame time in seconds rather than
+--   milliseconds
+-- - `sin()` takes a value in *turns* rather than radians
+-- - Flitter has no palettes, all colours are floating point RGB 3-vectorss,
+--   so I'm constructing an 8 colour palette using `hsv()` and greyscales
+-- - Flitter ranges (x..y) *exclude* the upper bound and so need to be
+--   adjusted compared to Lua for loops
+-- - The canvas is sized for the TIC-80 screen resolution, but the window is
+--   sized large enough to be useable on a modern screen
+--
+-- The original TIC-80 code:
+--
+-- function TIC()
+--  cls()
+--  t=time()/200
+--  sin=math.sin
+--
+--  for ly=1,8 do
+--   sv=sin(t/2+ly/4)
+--   for lx=1,8 do
+--    line(0,68+lx+sv*50,240,68+lx+sv*50,lx+8)
+--   end
+--  end
+--
+--  for i=1,67 do
+--   sv=sin(i/13+t/8)*sin(i/7+t/2)*60
+--   for j=0,8 do
+--    line(sv+j+120,0+i*2,sv+j+120,136,j+8)
+--   end
+--  end
+-- end
+
+let time=time*1000
+    sin=func(x) sin(x/6.283)
+    palette=func(c) (7-c)/3 if c >= 4 else hsv(0.6-c/30;1;1)
+    line=func(p,c) (!line stroke=true stroke_width=1 points=p color=palette(c))
+
+func TIC()
+    let t=time/200
+    for i in ..8
+        let s=sin(t/2+i/4)
+        for j in ..8
+            line(0;68+j+s*50;240;68+j+s*50,j)
+    for i in 1..68
+        let s=sin(i/13+t/8)*sin(i/7+t/2)*60
+        for j in ..8
+            line(s+j+120;i*2;s+j+120;136,j)
+
+!window id=:t size=(240;136)*4
+    !record filename=('day06x_renderbars.mp4' if run_time) codec=:hevc crf=30 nearest=true
+        !canvas size=240;136 antialias=false
+            TIC()
