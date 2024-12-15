@@ -59,6 +59,6 @@ func TIC()
             line(s+j+120;i*2;s+j+120;136,j)
 
 !window id=:t size=(240;136)*4
-    !record filename=('day06x_renderbars.mp4' if run_time) codec=:hevc crf=30 nearest=true
+    !record filename=('day06x_rasterbars.mp4' if run_time) codec=:hevc crf=30 nearest=true
         !canvas size=240;136 antialias=false
             TIC()
