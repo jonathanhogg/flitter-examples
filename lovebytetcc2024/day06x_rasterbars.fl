@@ -58,7 +58,9 @@ func TIC()
         for j in ..8
             line(s+j+120;i*2;s+j+120;136,j)
 
-!window id=:t size=(240;136)*4
-    !record filename=('day06x_rasterbars.mp4' if run_time) codec=:hevc crf=30 nearest=true
-        !canvas size=240;136 antialias=false
-            TIC()
+!window id=:t size=(1920;1080)
+    !record filename=('day06x_rasterbars.mp4' if run_time) codec=:hevc crf=28
+        !bloom radius=6
+            !shader fragment=read('../glsl/crt.frag') brightness=2 scale=8 nearest=true
+                !canvas size=240;136 antialias=false
+                    TIC()
