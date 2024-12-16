@@ -44,7 +44,7 @@
 
 let time=time*1000
     sin=func(x) sin(x/6.283)
-    palette=func(c) (7-c)/3 if c >= 4 else hsv(0.6-c/30;1;1)
+    palette=func(c) (7-c)/3 if c >= 4 else hsv(2/3-c/18;1;1)
     line=func(p,c) (!line stroke=true stroke_width=1 points=p color=palette(c))
 
 func TIC()
@@ -58,9 +58,14 @@ func TIC()
         for j in ..8
             line(s+j+120;i*2;s+j+120;136,j)
 
-!window id=:t size=(1920;1080)
-    !record filename=('day06x_rasterbars.mp4' if run_time) codec=:hevc crf=28
-        !bloom radius=6
-            !shader fragment=read('../glsl/crt.frag') brightness=2 scale=8 nearest=true
-                !canvas size=240;136 antialias=false
-                    TIC()
+let SIZE=(1920;1080) RESOLUTION=240;136 SCALE=round(mean(SIZE/RESOLUTION)) CRT=false
+!window id=:t size=SIZE
+    !record filename=('day06x_rasterbars.mp4' if run_time) codec=:hevc crf=28 nearest=true
+        if CRT
+            !bloom radius=round(SCALE/3)
+                !shader fragment=read('../glsl/crt.frag') brightness=2 scale=SCALE nearest=true
+                    !canvas size=RESOLUTION antialias=false
+                        TIC()
+        else
+            !canvas size=RESOLUTION antialias=false
+                TIC()
