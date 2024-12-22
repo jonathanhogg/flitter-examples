@@ -23,7 +23,7 @@ void main() {
     if (offset) {
         if (p.y > 1.0) {
             p.y -= 1.0;
-            c = mix(c, texture(texture0, vec2(q.x, min(q.y + 1.0, input_size.y - 1.0)) / input_size), p.y);
+            c = mix(c, texture(texture0, vec2(q.x, min(q.y + 1.0, input_size.y)) / input_size), p.y);
         } else {
             c = mix(texture(texture0, vec2(q.x, max(0.0, q.y - 1.0)) / input_size), c, p.y);
         }
