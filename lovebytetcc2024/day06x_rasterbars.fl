@@ -58,14 +58,16 @@ func TIC()
         for j in ..8
             line(s+j+120;i*2;s+j+120;136,j)
 
-let SIZE=(1920;1080) RESOLUTION=240;136 SCALE=round(mean(SIZE/RESOLUTION)) CRT=false
+let SIZE=(1920;1080) RESOLUTION=240;136
 !window id=:t size=SIZE
-    !record filename=('day06x_rasterbars.mp4' if run_time) codec=:hevc crf=28 nearest=true
+    !record filename=('day06x_rasterbars.mp4' if run_time) codec=:hevc crf=28
         if CRT
-            !bloom radius=round(SCALE/3)
-                !shader fragment=read('../glsl/crt.frag') brightness=2 scale=SCALE nearest=true
+            let scale=ceil(mean(SIZE/RESOLUTION)/3)*3
+            !bloom radius=round(scale/3)
+                !shader fragment=read('../glsl/crt.frag') brightness=3 scale=scale
                     !canvas size=RESOLUTION antialias=false
                         TIC()
         else
-            !canvas size=RESOLUTION antialias=false
-                TIC()
+            !shader nearest=true
+                !canvas size=RESOLUTION antialias=false
+                    TIC()
