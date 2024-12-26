@@ -40,5 +40,5 @@ func W(n)
 
 if run_time and frame
     !offscreen
-        !record filename='day12_xmastree.mp4' codec=:hevc crf=28
+        !record size=1080 filename='day12_xmastree.mp4' codec=:hevc crf=30
             !reference id=:t
