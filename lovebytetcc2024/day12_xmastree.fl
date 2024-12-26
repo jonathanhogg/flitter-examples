@@ -1,0 +1,44 @@
+
+-- LoveByte Tiny Code Christmas 2024
+-- Day 12: Rockin’ around the Christmas Tree!
+--
+-- This is a variaton of the day 1 challenge, but with the addition of winking
+-- lights and a star. Additional bling comes from the lens flare filter.
+--
+-- This example pulls lots of ugly tricks to get the size down to <700
+-- characters.
+
+
+let B=beat U=uniform N=150 Z=0;0 T=!transform
+func C(e)
+ !cone radius=.2 end=e
+func R(m,n)
+ C(Z;10)segments=6
+ for i in..m*n
+  let q;r=U(-i)z=i/m/n
+  T rotate_z=q translate=Z;3+z*7 rotate_x=.25+r/9 scale=.5-z/2
+   R(m-1,n-i//m)
+func L(c)
+ !light position=0 color=c
+func W(n)
+ !window id=:t size=1080
+  !adjust tonemap=:aces
+   !flare
+    !canvas3d samples=4 position=0;20;5 focus=Z;6 fov=.1 max_lights=N rotate_z=B/60 color=.1;.4;0
+     R(2,200);n
+@W
+ for i in 1..N
+  let c=oklch(sine(B/4+U(1)[i]);.3;U(2)[i])z=2+7*(i/N)**1.5
+  T rotate_z=U(3)[i] translate=0;5-z/2-beta()[i];z
+   (!sphere size=.05 emissive=c*4);L(c/9)
+ T translate=Z;10.3
+  L(9;6;3);(C(0;polar(i/5-.15)/2)emissive=3;2;1) for i in..5
+
+
+ -- Record a short video with:
+ -- flitter lovebytetcc2024/day12_xmastree.fl --lockstep --runtime=30
+
+if run_time and frame
+    !offscreen
+        !record filename='day12_xmastree.mp4' codec=:hevc crf=28
+            !reference id=:t
