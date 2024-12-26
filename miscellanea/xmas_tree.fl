@@ -1,0 +1,34 @@
+
+%pragma tempo 60
+
+func tree(d=1, m=2, n=200)
+    !cone segments=8 size=.02;.02;1 position=0;0;.5
+    for i in ..m*n
+        let q;r=uniform(:pos;d;i) z=i/(m*n)
+        !transform rotate_z=q translate=0;0;.3+z*.7 rotate_x=(2.5+r)/10 scale=(1-z)/2
+            tree(d;i, m-1, n-i//m, color=color)
+
+!window size=1080
+    !adjust id=:top tonemap=:aces
+        !bloom radius=10
+            !flare threshold=2
+                !canvas3d samples=4 position=0;2;.75 focus=0;0;.55 up=0;0;1 fov=.1 near=.1 max_lights=200
+                    !transform rotate_z=beat/30
+                        !material color=.1;.4;0
+                            tree()
+                        for i in 100..450|2
+                            let c=oklch(1;0.3;uniform(:hue)[i])*sine(beat/(2+beta(:period)[i])+uniform(:phase)[i])
+                            !transform rotate_z=uniform(:rot)[i] translate=0;(1-i/500-beta(:offset)[i]/5)*0.5;i/500
+                                !sphere segments=8 size=5m emissive=c*5
+                                !light color=c/1k position=0
+                        !transform translate=0;0;1.04
+                            let c=colortemp(4000)
+                            !light color=c position=0
+                            !material emissive=c*30
+                                for i in ..5
+                                    !transform rotate_y=i/5
+                                        !cone start=0 end=0;0;.05 radius=.015
+
+    if run_time
+        !record filename='xmas_tree.mp4' codec=:hevc crf=28
+            !reference id=:top
