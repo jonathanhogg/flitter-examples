@@ -8,12 +8,9 @@
 --
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 
-let b=beat
+let t=time/5 Z=0;0
 !window size=1080
-  !canvas3d viewpoint=0;0;200 fov=1/8 rotate=b/30;b/20;0 color=3/(3;4;12) metal=1 roughness=0.2
-    (!light color=1 direction=i==0;i==1;i==2) for i in ..3
-    for i in ..50
-      !transform rotate_y=i/50 translate=50;0;0
-        for j in ..25
-          !transform rotate_z=j/25+sine(b/30+uniform()[i])
-            !box position=20;0;0 size=1;4;2
+ !canvas3d position=Z;110 rotate=t/3;t/2;0 color=(4;3;1)/4 metal=1 roughness=.3
+  (!light color=1 direction=i==0;i==1;i==2)for i in..3
+  (!transform rotate_y=i translate=50;Z rotate_z=j+sine(t/5+i))for i in..1|.02 for j in..1|.04
+   !box position=20;Z size=1;4;2

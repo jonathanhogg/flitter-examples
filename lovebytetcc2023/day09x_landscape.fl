@@ -1,17 +1,13 @@
 -- 3D Dot Landscape
 --
 -- This example pushes the engine quite hard as it is not designed for very
--- large numbers of objects (there's 15,000 boxes in this). The code is left
--- fairly readable as it's quite simple. A 2D slice through 3D simplex noise is
--- used to create the shifting landscape. This is calculated row at a time as
--- this is faster than point at a time.
+-- large numbers of objects (there's 15,000 boxes in this). A 2D slice through
+-- 3D simplex noise is used to create the shifting landscape. This is
+-- calculated all in one go as this is faster than point at a time.
 --
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 
-let R=100 C=150
-!window size=1280;720
-    !canvas3d viewpoint=100;R*5;125 up=0;0;1 samples=4 fog_color=.01 fog_min=R*2 fog_max=R*10
-        for y in ..R
-            let h=noise(:surface, (..C)/25, y/25, beat/10)*.75 z=h*167
-            for x in ..C
-                !box segments=16 position=10*(x-C/2);10*(y-R/2);z[x] emissive=hsv(h[x])
+let R=100 C=150 h=noise(0,(..R)/25,(..C)/25,beat/10)*.6 z=h*166
+!window size=1920;1080
+ !canvas3d position=0;-R*9;99 samples=4 fog_max=R*9
+  (!box emissive=hsv(h[i])position=9*(i%C-C/2;-i/C);z[i])for i in..R*C

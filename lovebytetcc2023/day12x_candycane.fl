@@ -9,9 +9,7 @@
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 
 !window size=1080
-  !canvas3d rotate=beat/(20;40;60) translate=-150;-50;0
-    for i in -400..300
-      !transform rotate_z=max(0,i)/600 translate=-min(i,0);100;0
-        for j in ..4
-          !transform rotate_x=j/4+i/200-beat/5
-            !sphere size=10;30;30 position=0;10;0 emissive=1;j%2;j%2
+ !canvas3d rotate=beat/(20;40;60)translate=-150;-50;0
+  for i in-400..300,j in..4
+   !transform rotate_z=max(0,i)/600 translate=-min(i,0);100;0 rotate_x=j/4+i/200-beat/5
+    !sphere size=10;30;30 position=0;10;0 emissive=1;j%2;j%2

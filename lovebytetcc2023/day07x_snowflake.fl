@@ -7,16 +7,14 @@
 --
 -- Copyright 2024 by Jonathan Hogg and licensed under CC BY-NC-SA 4.0
 
-let t=beat/20 s=300 d=sine(t)/6
+let t=beat/20s=300d=sine(t)/6
 func f(r,l)
- for i in 1..5 if r
-  (!group translate=i*s/4;0 rotate=d scale=i/8) for d in (d;-d)
-   f(r-1, l/2)
+ (!group translate=i*s/4;0 rotate=d scale=i/8)for d in(d;-d)for i in..5
+  f(r-1,l/2)if r
  !line points=0;12;s;6;s;-6;0;-12;0;10 fill=1
 !window size=1080
  !canvas translate=540
   !gradient radius=s
-   (!stop color=i<1;i<2;1) for i in ..3
-  for i in ..6
-   !group rotate=i/6+t
-    f(2,1)
+   (!stop color=i<1;i<2;1)for i in..3
+  (!group rotate=i/6+t)for i in..6
+   f(2,1)
