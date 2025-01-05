@@ -1,0 +1,24 @@
+
+%pragma tempo 60
+
+let N=25
+    NLIGHTS=10
+    SCALE=3
+
+!window size=1080
+    !record filename=('day06_isometric.mp4' if run_time) codec=:hevc crf=25
+        !canvas3d orthographic=true samples=4 viewpoint=100 width=175
+            for i in ..NLIGHTS
+                let axis=normalize(uniform(:axis;i)[..3]-0.5)
+                    color=hsv(i/NLIGHTS;1;1)
+                    period=15+30*beta(:period)[i]
+                    phase=uniform(:phase)[i]
+                !transform matrix=point_towards(axis, 0;1;0) rotate_z=beat/period+phase translate=100;0;0
+                    !light color=color*2k position=0
+            !material color=0 roughness=0.25 transparency=0.5
+                !transform scale=100/N
+                    for z in ..N
+                        let ns=noise(:n, SCALE*(..N)/N, SCALE*(..N)/N, SCALE*z/N, beat/10)
+                        for x in ..N, y in ..N
+                            if ns[y*N+x] > 0
+                                !box position=(x;y;z)-N/2 size=0.75
